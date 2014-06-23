@@ -25,6 +25,7 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     String name;
+    int boobs;
     List<Workout> wOuts = new ArrayList<Workout>();
     int i;
 
