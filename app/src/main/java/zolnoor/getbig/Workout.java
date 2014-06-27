@@ -8,20 +8,21 @@ import zolnoor.getbig.MainActivity;
 /**
  * Created by Nick on 6/23/2014.
  */
-public class Workout extends Object {
+public class Workout {
 
     List<Exercise> list = new ArrayList<Exercise>();
-    static String lastdate;
-    static String name;
-    static Calendar c;
+    public static String lastdate;
+    public final String name;
+    public static Calendar c;
+    public final int itemId;
 
-    public static Workout newWOut(String newName){
-        Workout getSwole = new Workout();
+    public Workout(String newName, int id){
 
-        Workout.name=newName;
-        Workout.c=Calendar.getInstance();
+        this.name=newName;
+        this.c=Calendar.getInstance();
+        this.itemId=id;
 
-        return getSwole;
+
     }
 
 
