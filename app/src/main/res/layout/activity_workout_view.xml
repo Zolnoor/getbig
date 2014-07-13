@@ -6,29 +6,14 @@
     <ListView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:id="@+id/workouts"
+        android:id="@+id/exercises"
         android:layout_marginBottom="10dp"
         android:layout_marginTop="5dp"
-        android:background="@android:color/transparent"
+        android:background="#CCCCCC"
         android:cacheColorHint="@android:color/transparent"
         android:divider="#CCCCCC"
         android:dividerHeight="15dp"
         android:paddingLeft="2dp">
 
-
-        </ListView>
-    </LinearLayout>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    </ListView>
+</LinearLayout>

@@ -9,6 +9,7 @@
         android:layout_alignParentTop="true"
         android:text="Test"
         android:textSize="15dp"
+        android:onClick="onListClick"
         />
 
 </RelativeLayout>

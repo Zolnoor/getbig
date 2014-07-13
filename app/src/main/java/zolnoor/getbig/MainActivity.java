@@ -2,10 +2,12 @@ package zolnoor.getbig;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.text.Editable;
-import android.util.Log;
+import android.widget.AdapterView.OnItemClickListener;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.os.Bundle;
@@ -14,16 +16,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import java.util.List;
 
 
 public class MainActivity extends Activity {
 
+    public final static String NAME = "zolnoor.getbig.MainActivity";
     String name;
     List<Workout> wOuts = new ArrayList<Workout>();
     static int numberOfWorkouts;
@@ -43,28 +44,30 @@ public class MainActivity extends Activity {
     //Creates a listview, populates an ArrayList of strings with names of the workouts from the workout arraylist
     //then loops to populate the list, then makes an adapter and sets the listview adapter to that
     void updateList(){
-       /* Gson gson = new Gson();
-        String jsonWorkouts = gson.toJson(wOuts);
-        Log.d("TAG","jsonWorkouts = " + jsonWorkouts);
 
-        if (wOuts==null){
-
-            Type type = new TypeToken<ArrayList<Workout>>(){}.getType();
-            wOuts = gson.fromJson(jsonWorkouts, type);
-        }*/
 
         final ListView listview = (ListView) findViewById(R.id.workouts);
+        final Intent intent = new Intent(this, WorkoutView.class);
+
 
         final ArrayList<String> list = new ArrayList<String>();
+
         for(i=wOuts.size()-1;i>=0;i--){
 
-            list.add(wOuts.get(i).name);
+            list.add(0, wOuts.get(i).name);
+
         }
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
 
+        listview.setOnItemClickListener(new OnItemClickListener() {
+            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3){
 
+                intent.putExtra(NAME, wOuts.get(arg2));
+                startActivity(intent);
+            }
+        });
 
 
     }
@@ -124,6 +127,7 @@ public class MainActivity extends Activity {
         updateList();
 
     }
+
 
 
 }

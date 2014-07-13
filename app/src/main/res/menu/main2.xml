@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".WorkoutView" >
+    <item android:id="@+id/action_add_exercise"
+        android:icon="@drawable/ic_action_new"
+        android:showAsAction="always"
+        android:title="Add an Exercise"
+
+        />
+</menu>
