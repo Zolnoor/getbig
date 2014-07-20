@@ -17,6 +17,10 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import java.util.List;
@@ -29,6 +33,7 @@ public class MainActivity extends Activity {
     List<Workout> wOuts = new ArrayList<Workout>();
     static int numberOfWorkouts;
     int i;
+    public String json = new Gson().toJson(wOuts);
 
     //calls updateList() in an attempt to get saved workouts
     @Override
@@ -36,20 +41,41 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        updateList();
+        //updateList();
 
+        Type type = new TypeToken<List<Workout>>(){}.getType();
+        List<Workout> inpList = new Gson().fromJson(json, type);
+        wOuts = inpList;
 
     }
 
     //Creates a listview, populates an ArrayList of strings with names of the workouts from the workout arraylist
     //then loops to populate the list, then makes an adapter and sets the listview adapter to that
+
+   /* void recoverList(){
+        if(wOuts.size()==0){
+            Type type = new TypeToken<List<Workout>>(){}.getType();
+            List<Workout> inpList = new Gson().fromJson(json, type);
+            wOuts = inpList;
+
+        }
+
+
+    }*/
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        json = new Gson().toJson(wOuts);
+
+
+    }
+
     void updateList(){
 
 
         final ListView listview = (ListView) findViewById(R.id.workouts);
         final Intent intent = new Intent(this, WorkoutView.class);
-
-
         final ArrayList<String> list = new ArrayList<String>();
 
         for(i=wOuts.size()-1;i>=0;i--){
@@ -59,8 +85,8 @@ public class MainActivity extends Activity {
         }
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(adapter);
 
+        listview.setAdapter(adapter);
         listview.setOnItemClickListener(new OnItemClickListener() {
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3){
 
@@ -68,8 +94,7 @@ public class MainActivity extends Activity {
                 startActivity(intent);
             }
         });
-
-
+       json = new Gson().toJson(wOuts);
     }
 
     //populates the actionbar with that one item

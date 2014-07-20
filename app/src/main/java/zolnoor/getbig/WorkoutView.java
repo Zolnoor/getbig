@@ -6,7 +6,9 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,13 +19,15 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+
 import java.util.ArrayList;
 
 /**
  * Created by Nick on 7/8/2014.
  */
 public class WorkoutView extends Activity {
-
+   // Intent intent = getIntent();
+   // final Workout wout = (Workout)intent.getSerializableExtra(MainActivity.NAME);
 
     //Creates view and sets custom ActionBar title
     @Override
@@ -112,7 +116,7 @@ public class WorkoutView extends Activity {
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list);
         listview.setAdapter(adapter);
-
+        registerForContextMenu(listview);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3){
                 Toast.makeText(getBaseContext(), wout.list.get(arg2).name, Toast.LENGTH_SHORT).show();
@@ -120,8 +124,33 @@ public class WorkoutView extends Activity {
             }
         });
 
+        listview.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+                wout.list.remove(i);
+                updateList();
+                return false;
+            }
+        });
 
     }
+
+   /* @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+                                    ContextMenu.ContextMenuInfo menuInfo) {
+
+        Toast.makeText(getBaseContext(), "TEST", Toast.LENGTH_SHORT).show();
+      if (v.getId()==R.id.exercises) {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)menuInfo;
+            menu.setHeaderTitle(wout.list.get(info.position).name);
+            String[] menuItems = getResources().getStringArray(R.array.items);
+            for (int i = 0; i<menuItems.length; i++) {
+                menu.add(Menu.NONE, i, i, menuItems[i]);
+            }
+        }
+    } */
+
+
 
 
 }
