@@ -6,7 +6,7 @@
     <ListView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:id="@+id/workouts"
+        android:id="@android:id/list"
         android:layout_marginBottom="10dp"
         android:layout_marginTop="5dp"
         android:background="@android:color/transparent"

@@ -8,7 +8,7 @@
         android:id="@+id/textViewItem"
         android:layout_alignParentTop="true"
         android:text="Test"
-        android:textSize="15dp"
+        android:textSize="40dp"
         android:onClick="onListClick"
         />
 

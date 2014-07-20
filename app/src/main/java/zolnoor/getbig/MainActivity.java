@@ -2,38 +2,35 @@ package zolnoor.getbig;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ListActivity;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.text.Editable;
+import android.view.ContextMenu;
 import android.widget.AdapterView.OnItemClickListener;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+
 import android.widget.EditText;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+
 import android.widget.ListView;
+import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-
-import java.util.List;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends ListActivity {
 
-    public final static String NAME = "zolnoor.getbig.MainActivity";
-    String name;
-    List<Workout> wOuts = new ArrayList<Workout>();
-    static int numberOfWorkouts;
-    int i;
-    public String json = new Gson().toJson(wOuts);
+    private static final int DELETE_ID = Menu.FIRST + 3;
+    private DatabaseHelper db = null;
+    private Cursor workoutsCursor = null;
+    public SimpleCursorAdapter adapter;
 
     //calls updateList() in an attempt to get saved workouts
     @Override
@@ -41,60 +38,29 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //updateList();
+        db = new DatabaseHelper(this);
+        workoutsCursor = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, title " +
+                                "FROM workouts ORDER BY title",
+                        null
+                );
+        adapter = new SimpleCursorAdapter(this,
+                R.layout.list_view_item, workoutsCursor,
+                new String[]{DatabaseHelper.TITLE},
+                new int[]{R.id.textViewItem}, 0);
 
-        Type type = new TypeToken<List<Workout>>(){}.getType();
-        List<Workout> inpList = new Gson().fromJson(json, type);
-        wOuts = inpList;
+        setListAdapter(adapter);
+        registerForContextMenu(getListView());
 
     }
-
-    //Creates a listview, populates an ArrayList of strings with names of the workouts from the workout arraylist
-    //then loops to populate the list, then makes an adapter and sets the listview adapter to that
-
-   /* void recoverList(){
-        if(wOuts.size()==0){
-            Type type = new TypeToken<List<Workout>>(){}.getType();
-            List<Workout> inpList = new Gson().fromJson(json, type);
-            wOuts = inpList;
-
-        }
-
-
-    }*/
 
     @Override
-    public void onPause(){
-        super.onPause();
-        json = new Gson().toJson(wOuts);
+    public void onDestroy() {
+        super.onDestroy();
 
-
-    }
-
-    void updateList(){
-
-
-        final ListView listview = (ListView) findViewById(R.id.workouts);
-        final Intent intent = new Intent(this, WorkoutView.class);
-        final ArrayList<String> list = new ArrayList<String>();
-
-        for(i=wOuts.size()-1;i>=0;i--){
-
-            list.add(0, wOuts.get(i).name);
-
-        }
-
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list);
-
-        listview.setAdapter(adapter);
-        listview.setOnItemClickListener(new OnItemClickListener() {
-            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3){
-
-                intent.putExtra(NAME, wOuts.get(arg2));
-                startActivity(intent);
-            }
-        });
-       json = new Gson().toJson(wOuts);
+        workoutsCursor.close();
+        db.close();
     }
 
     //populates the actionbar with that one item
@@ -109,51 +75,142 @@ public class MainActivity extends Activity {
     //Decides what to do for what item selected
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.action_add_workout:
-                addWorkout();
+                add();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v,
+                                    ContextMenu.ContextMenuInfo menuInfo) {
+        menu.add(Menu.NONE, DELETE_ID, Menu.NONE, "Delete")
+                .setAlphabeticShortcut('d');
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case DELETE_ID:
+                AdapterView.AdapterContextMenuInfo info =
+                        (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+
+                delete(info.id);
+                return (true);
+        }
+        return (super.onOptionsItemSelected(item));
+    }
+
     //Opens a dialog button with an edittext, positive and negative button. if ok is selected, showThatShit()
     //is called and the edittext field value is saved to a string
-    public void addWorkout(){
+    public void add() {
         final EditText input = new EditText(this);
         new AlertDialog.Builder(this)
                 .setTitle("Create new workout")
                 .setMessage("Please name your workout!")
                 .setView(input)
-                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        Editable value = input.getText();
-                        name = value.toString();
-                        showThatShit();
-                    }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                // Do nothing.
+                .setPositiveButton("Ok",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,
+                                                int whichButton) {
+                                Editable value = input.getText();
+                                String name = value.toString();
+                                processAdd(name);
+                            }
+                        }
+                )
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                // Do nothing.
+                            }
+                        }
+                )
+                .show();
+    }
+
+    public void delete(final long rowId) {
+        if (rowId > 0) {
+            new AlertDialog.Builder(this)
+                    .setTitle("You sure you want to delete this Workout?")
+                    .setPositiveButton("Ok",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog,
+                                                    int whichButton) {
+                                    processDelete(rowId);
+                                }
+                            }
+                    )
+                    .setNegativeButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    // Do nothing.
+                                }
+                            }
+                    )
+                    .show();
+
+
+        }
+    }
+
+    public void processAdd(String name){
+        ContentValues values=new ContentValues(1);
+
+        values.put(DatabaseHelper.TITLE, name);
+
+        db.getWritableDatabase().insert("workouts", DatabaseHelper.TITLE, values);
+        refresh();
+    }
+
+    public void processDelete(long rowId){
+        String[] args={String.valueOf(rowId)};
+
+        db.getWritableDatabase().delete("workouts", "_ID=?", args);
+        refresh();
+    }
+
+    public void refresh(){
+
+        db = new DatabaseHelper(this);
+        workoutsCursor = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, title " +
+                                "FROM workouts ORDER BY title",
+                        null
+                );
+        adapter = new SimpleCursorAdapter(this,
+                R.layout.list_view_item, workoutsCursor,
+                new String[]{DatabaseHelper.TITLE},
+                new int[]{R.id.textViewItem}, 0);
+
+        setListAdapter(adapter);
+        registerForContextMenu(getListView());
+    }
+
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        int bigID=-14;
+        workoutsCursor.moveToFirst();
+        while(bigID==-14){
+            if(workoutsCursor.getInt(0)==id){
+                bigID=workoutsCursor.getInt(0);
+                Toast.makeText(this, "id is"+bigID, Toast.LENGTH_SHORT).show();
+                
             }
-        }).show();
+            else{
+                workoutsCursor.moveToNext();
+            }
 
+
+
+        }
 
 
     }
-
-    //assigns ID by using size of the arraylist of workouts, creates a new Workout for the name used, adds it
-    //to the arraylist, and then calls updateList()
-    private void showThatShit(){
-
-        numberOfWorkouts=wOuts.size();
-        Workout newOne = new Workout(name, numberOfWorkouts);
-        wOuts.add(newOne);
-        updateList();
-
-    }
-
-
-
 }
 
