@@ -1,5 +1,6 @@
 package zolnoor.getbig;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -7,52 +8,66 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.text.Editable;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.widget.AdapterView.OnItemClickListener;
-import android.view.View;
-import android.widget.AdapterView;
-
-import android.widget.EditText;
-import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 
-
-public class MainActivity extends ListActivity {
+public class ExerciseView extends ListActivity {
 
     private static final int DELETE_ID = Menu.FIRST + 3;
-    private DatabaseHelper db = null;
-    private Cursor workoutsCursor = null;
+    private ExerciseDBHelper db = null;
+    private DatabaseHelper pdb = null;
+    private Cursor exerciseCursor = null;
+    private Cursor workoutCursor = null;
     public SimpleCursorAdapter adapter;
+    private Intent nIntent;
+    private int PID;
 
     //calls updateList() in an attempt to get saved workouts
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        db = new DatabaseHelper(this);
-        workoutsCursor = db
+        Log.d("no", "MADE IT HERE");
+        nIntent = getIntent();
+        PID = nIntent.getIntExtra("PID", 0);
+        String eyedee = Integer.toString(PID);
+        Log.d("no", "about to make cursor");
+        db = new ExerciseDBHelper(this);
+        exerciseCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
-                                "FROM workouts ORDER BY title",
+                                "FROM exercises where pid = "+eyedee,
                         null
                 );
+
         adapter = new SimpleCursorAdapter(this,
-                R.layout.list_view_item, workoutsCursor,
-                new String[]{DatabaseHelper.TITLE},
+                R.layout.list_view_item, exerciseCursor,
+                new String[]{ExerciseDBHelper.TITLE},
                 new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
+        ActionBar ab = getActionBar();
+        String title = getTitle(PID);
+        Log.d("TITLE", "this shit is supposed to say"+title);
+        if(title == null){
+            ab.setTitle(R.string.null_message);
+        }
+        else{
+            ab.setTitle(title);
+        }
 
     }
 
@@ -60,8 +75,37 @@ public class MainActivity extends ListActivity {
     public void onDestroy() {
         super.onDestroy();
 
-        workoutsCursor.close();
+        exerciseCursor.close();
         db.close();
+    }
+
+    private String getTitle(Integer number){
+        Log.d("geTtitle", "integer passed to gettitle is "+number);
+        String name =null;
+        Log.d("MESSAGE", "the getTitle funct is startng");
+        pdb = new DatabaseHelper(this);
+        workoutCursor = pdb.getReadableDatabase()
+                       .rawQuery("SELECT _ID, title " +
+                                       "FROM workouts WHERE _ID = "+number,
+                               null
+                       );
+        try {
+            workoutCursor.moveToFirst();
+            name = workoutCursor.getString(1);
+            Log.d("INSIDETRY", "name is "+name+"inside try");
+        } catch (Exception e){
+            Log.d("INDEXING", "caught exception"+e);
+        }
+       /* while(!(workoutCursor.getInt(0)==number)) {
+            if (workoutCursor.getInt(0) == number) {
+                name = workoutCursor.getString(1);
+                Log.d("TITLE", "inside the loop it is "+name);
+            }
+                workoutCursor.moveToNext();
+
+        }*/
+        return name;
+
     }
 
     //populates the actionbar with that one item
@@ -159,33 +203,40 @@ public class MainActivity extends ListActivity {
     }
 
     public void processAdd(String name){
-        ContentValues values=new ContentValues(1);
+        nIntent = getIntent();
+        PID = nIntent.getIntExtra("PID", 0);
 
-        values.put(DatabaseHelper.TITLE, name);
+        ContentValues values=new ContentValues(2);
 
-        db.getWritableDatabase().insert("workouts", DatabaseHelper.TITLE, values);
+        values.put(ExerciseDBHelper.TITLE, name);
+        values.put(ExerciseDBHelper.PID, PID);
+
+        db.getWritableDatabase().insert("exercises", ExerciseDBHelper.TITLE, values);
         refresh();
     }
 
     public void processDelete(long rowId){
         String[] args={String.valueOf(rowId)};
 
-        db.getWritableDatabase().delete("workouts", "_ID=?", args);
+        db.getWritableDatabase().delete("exercises", "_ID=?", args);
         refresh();
     }
 
     public void refresh(){
 
-        db = new DatabaseHelper(this);
-        workoutsCursor = db
+        nIntent = getIntent();
+        PID = nIntent.getIntExtra("PID", 0);
+
+        db = new ExerciseDBHelper(this);
+        exerciseCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
-                                "FROM workouts ORDER BY title",
+                                "FROM exercises WHERE pid = "+PID,
                         null
                 );
         adapter = new SimpleCursorAdapter(this,
-                R.layout.list_view_item, workoutsCursor,
-                new String[]{DatabaseHelper.TITLE},
+                R.layout.list_view_item, exerciseCursor,
+                new String[]{ExerciseDBHelper.TITLE},
                 new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
@@ -196,21 +247,17 @@ public class MainActivity extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
         int bigID=-14;
-        workoutsCursor.moveToFirst();
+        exerciseCursor.moveToFirst();
         while(bigID==-14){
-            if(workoutsCursor.getInt(0)==id){
-                bigID=workoutsCursor.getInt(0);
-                Log.d("PARENTID", "The parent ID is "+bigID);
-                Intent intent = new Intent(this, ExerciseView.class);
-                intent.putExtra("PID", bigID);
-                Log.d("no", "no");
-                startActivity(intent);
+            if(exerciseCursor.getInt(0)==id){
+                bigID=exerciseCursor.getInt(0);
 
-               // Toast.makeText(this, "id is"+bigID, Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(this, "id is" + bigID, Toast.LENGTH_SHORT).show();
 
             }
             else{
-                workoutsCursor.moveToNext();
+                exerciseCursor.moveToNext();
             }
 
 
@@ -220,4 +267,3 @@ public class MainActivity extends ListActivity {
 
     }
 }
-

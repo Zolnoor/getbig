@@ -14,7 +14,7 @@ public class ExerciseDBHelper extends SQLiteOpenHelper {
     static final String PID="pid";
 
 
-    public ExerciseDBHelper(Context context) { super(context, DATABASE_NAME, null, 1); }
+    public ExerciseDBHelper(Context context) { super(context, DATABASE_NAME, null, 2); }
 
     @Override
     public void onCreate(SQLiteDatabase db){

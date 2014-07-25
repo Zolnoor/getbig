@@ -14,7 +14,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static final String TITLE="title";
 
 
-    public DatabaseHelper(Context context) { super(context, DATABASE_NAME, null, 1); }
+    public DatabaseHelper(Context context) { super(context, DATABASE_NAME, null, 2); }
 
     @Override
     public void onCreate(SQLiteDatabase db){

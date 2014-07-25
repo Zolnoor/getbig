@@ -4,5 +4,7 @@
     <string name="app_name">GetBig</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_exercise_view">ExerciseView</string>
+    <string name="null_message">Null Error</string>
 
 </resources>
