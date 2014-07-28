@@ -1,6 +1,6 @@
 package zolnoor.getbig;
 
-import android.app.Activity;
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
@@ -8,21 +8,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.text.Editable;
-import android.util.Log;
 import android.view.ContextMenu;
-import android.widget.AdapterView.OnItemClickListener;
 import android.view.View;
 import android.widget.AdapterView;
-
 import android.widget.EditText;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
+
 
 
 
@@ -33,7 +29,7 @@ public class MainActivity extends ListActivity {
     private Cursor workoutsCursor = null;
     public SimpleCursorAdapter adapter;
 
-    //calls updateList() in an attempt to get saved workouts
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -174,6 +170,7 @@ public class MainActivity extends ListActivity {
         refresh();
     }
 
+    //Refreshes the current list view when adding or deleting items
     public void refresh(){
 
         db = new DatabaseHelper(this);
@@ -192,6 +189,8 @@ public class MainActivity extends ListActivity {
         registerForContextMenu(getListView());
     }
 
+    //Finds the _ID of the workout clicked, puts it in an intent and sends it to
+    //ExerciseView.java in order to make correct PID and get right title
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
@@ -204,18 +203,15 @@ public class MainActivity extends ListActivity {
                 intent.putExtra("PID", bigID);
                 startActivity(intent);
 
-               // Toast.makeText(this, "id is"+bigID, Toast.LENGTH_SHORT).show();
-
             }
             else{
                 workoutsCursor.moveToNext();
             }
-
-
-
         }
-
-
     }
+
+
+
+
 }
 

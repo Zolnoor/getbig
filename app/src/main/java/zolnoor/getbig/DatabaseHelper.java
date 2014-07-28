@@ -13,8 +13,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME="db";
     static final String TITLE="title";
     static final String TABLE1="CREATE TABLE workouts (_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT);";
-    static final String TABLE2="CREATE TABLE exercises (_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, pid INTEGER);";
+    static final String TABLE2="CREATE TABLE exercises (_id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, pid INTEGER, clicked INTEGER);";
+    static final String TABLE3="CREATE TABLE parameters (_id INTEGER PRIMARY KEY AUTOINCREMENT, sets INTEGER, reps INTEGER, pid INTEGER, notes INTEGER, weight INTEGER, clicked INTEGER);";
     static final String PID="pid";
+    static final String CLICKED="clicked";
+    static final String REPS="reps";
+    static final String SETS="sets";
+    static final String NOTES="notes";
+    static final String WEIGHT="weight";
 
 
     public DatabaseHelper(Context context) { super(context, DATABASE_NAME, null, 2); }
@@ -23,6 +29,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db){
         db.execSQL(TABLE1);
         db.execSQL(TABLE2);
+        db.execSQL(TABLE3);
     }
 
     @Override

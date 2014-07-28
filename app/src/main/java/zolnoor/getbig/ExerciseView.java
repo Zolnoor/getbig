@@ -1,7 +1,6 @@
 package zolnoor.getbig;
 
 import android.app.ActionBar;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
@@ -17,8 +16,11 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.NumberPicker;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
@@ -32,7 +34,10 @@ public class ExerciseView extends ListActivity {
     private Cursor workoutCursor = null;
     public SimpleCursorAdapter adapter;
     private Intent nIntent;
-    private int PID;
+    private int PID, REPS, WEIGHT, NOTES, SETS;
+    private NumberPicker np;
+    private CheckBox reps, weight, notes;
+
 
     //calls updateList() in an attempt to get saved workouts
     @Override
@@ -45,7 +50,7 @@ public class ExerciseView extends ListActivity {
         db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title " +
+                .rawQuery("SELECT _ID, title, clicked " +
                                 "FROM exercises where pid = "+eyedee,
                         null
                 );
@@ -77,6 +82,7 @@ public class ExerciseView extends ListActivity {
         db.close();
     }
 
+    //Pulls the title by using the PID from the 'workouts' table
     private String getTitle(Integer number){
 
         String name =null;
@@ -94,7 +100,7 @@ public class ExerciseView extends ListActivity {
         } catch (Exception e){
             Log.d("INDEXING", "caught exception"+e);
         }
-       
+
         return name;
 
     }
@@ -140,8 +146,101 @@ public class ExerciseView extends ListActivity {
         return (super.onOptionsItemSelected(item));
     }
 
-    //Opens a dialog button with an edittext, positive and negative button. if ok is selected, showThatShit()
-    //is called and the edittext field value is saved to a string
+    //Creates the parameter view, then inflates a dialog box with it
+    //Made for deciding how the exercise fragment will appear
+    public void fragParams(int i){
+
+        View checkBoxView = View.inflate(this, R.layout.paramaters, null);
+
+        try {
+            np = (NumberPicker) checkBoxView.findViewById(R.id.sets);
+            np.setMaxValue(10);
+            np.setMinValue(1);
+            np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+                @Override
+                public void onValueChange(NumberPicker numberPicker, int i, int i2) {
+                    SETS = i;
+                }
+            });
+
+
+
+
+            reps = (CheckBox) checkBoxView.findViewById(R.id.reps);
+            reps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b == true) {
+                        REPS = 1;
+                    } else if (b == false) {
+                        REPS = 0;
+                    }
+                }
+            });
+
+            weight = (CheckBox) checkBoxView.findViewById(R.id.weight);
+            weight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b == true) {
+                        WEIGHT = 1;
+                    } else if (b == false) {
+                        WEIGHT = 0;
+                    }
+                }
+            });
+
+
+            notes = (CheckBox) checkBoxView.findViewById(R.id.notes);
+            notes.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b == true) {
+                        NOTES = 1;
+                    } else if (b == false) {
+                        NOTES = 0;
+                    }
+                }
+            });
+
+
+
+            new AlertDialog.Builder(this)
+                    .setTitle("What kind of exercise?")
+                    .setMessage("Choose necessary parameters")
+                    .setView(checkBoxView)
+                    .setCancelable(false)
+                    .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            ContentValues values = new ContentValues(6);
+                            values.put(DatabaseHelper.PID, i);
+                            values.put(DatabaseHelper.SETS, SETS);
+                            values.put(DatabaseHelper.REPS, REPS);
+                            values.put(DatabaseHelper.NOTES, NOTES);
+                            values.put(DatabaseHelper.WEIGHT, WEIGHT);
+                            values.put(DatabaseHelper.CLICKED, 1);
+                            db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
+                            Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    // Do nothing.
+                                }
+                            }
+                    )
+                    .show();
+        }catch (Exception e){
+            Log.d("FUCK", "The exception was "+e);
+        }
+    }
+
+
+
+    //Opens a dialog button with an edittext, positive and negative button. if ok is selected
+    //then processAdd() is called
     public void add() {
         final EditText input = new EditText(this);
         new AlertDialog.Builder(this)
@@ -193,14 +292,16 @@ public class ExerciseView extends ListActivity {
         }
     }
 
+    //Adds a new row to the table 'exercises'
     public void processAdd(String name){
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 0);
 
-        ContentValues values=new ContentValues(2);
+        ContentValues values=new ContentValues(3);
 
         values.put(DatabaseHelper.TITLE, name);
         values.put(DatabaseHelper.PID, PID);
+        values.put(DatabaseHelper.CLICKED, 0);
 
         db.getWritableDatabase().insert("exercises", DatabaseHelper.TITLE, values);
         refresh();
@@ -213,6 +314,7 @@ public class ExerciseView extends ListActivity {
         refresh();
     }
 
+    //Refreshes the current list view when adding or deleting items
     public void refresh(){
 
         nIntent = getIntent();
@@ -221,7 +323,7 @@ public class ExerciseView extends ListActivity {
         db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title " +
+                .rawQuery("SELECT _ID, title, clicked " +
                                 "FROM exercises WHERE pid = "+PID,
                         null
                 );
@@ -234,6 +336,9 @@ public class ExerciseView extends ListActivity {
         registerForContextMenu(getListView());
     }
 
+    //Gets the ID of the item. Checks to see if it has ever been clicked before
+    //If it has been clicked, it opens the respective fragment
+    //If not, it opens the dialog to change the fragment parameters
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
@@ -243,18 +348,19 @@ public class ExerciseView extends ListActivity {
             if(exerciseCursor.getInt(0)==id){
                 bigID=exerciseCursor.getInt(0);
 
-
-                Toast.makeText(this, "id is" + bigID, Toast.LENGTH_SHORT).show();
-
+                if(exerciseCursor.getInt(2)==0){
+                    fragParams(bigID);
+                }
+                else{
+                    //this is where I will open the fragment
+                }
             }
             else{
                 exerciseCursor.moveToNext();
             }
-
-
-
         }
-
-
     }
+
+
+
 }
