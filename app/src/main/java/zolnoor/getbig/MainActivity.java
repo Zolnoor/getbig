@@ -200,10 +200,8 @@ public class MainActivity extends ListActivity {
         while(bigID==-14){
             if(workoutsCursor.getInt(0)==id){
                 bigID=workoutsCursor.getInt(0);
-                Log.d("PARENTID", "The parent ID is "+bigID);
                 Intent intent = new Intent(this, ExerciseView.class);
                 intent.putExtra("PID", bigID);
-                Log.d("no", "no");
                 startActivity(intent);
 
                // Toast.makeText(this, "id is"+bigID, Toast.LENGTH_SHORT).show();

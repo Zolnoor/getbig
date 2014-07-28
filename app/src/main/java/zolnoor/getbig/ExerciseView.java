@@ -26,7 +26,7 @@ import android.widget.Toast;
 public class ExerciseView extends ListActivity {
 
     private static final int DELETE_ID = Menu.FIRST + 3;
-    private ExerciseDBHelper db = null;
+    private DatabaseHelper db = null;
     private DatabaseHelper pdb = null;
     private Cursor exerciseCursor = null;
     private Cursor workoutCursor = null;
@@ -39,12 +39,10 @@ public class ExerciseView extends ListActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.d("no", "MADE IT HERE");
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 0);
         String eyedee = Integer.toString(PID);
-        Log.d("no", "about to make cursor");
-        db = new ExerciseDBHelper(this);
+        db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
@@ -54,14 +52,14 @@ public class ExerciseView extends ListActivity {
 
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
-                new String[]{ExerciseDBHelper.TITLE},
+                new String[]{DatabaseHelper.TITLE},
                 new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
         ActionBar ab = getActionBar();
         String title = getTitle(PID);
-        Log.d("TITLE", "this shit is supposed to say"+title);
+
         if(title == null){
             ab.setTitle(R.string.null_message);
         }
@@ -80,9 +78,9 @@ public class ExerciseView extends ListActivity {
     }
 
     private String getTitle(Integer number){
-        Log.d("geTtitle", "integer passed to gettitle is "+number);
+
         String name =null;
-        Log.d("MESSAGE", "the getTitle funct is startng");
+
         pdb = new DatabaseHelper(this);
         workoutCursor = pdb.getReadableDatabase()
                        .rawQuery("SELECT _ID, title " +
@@ -92,18 +90,11 @@ public class ExerciseView extends ListActivity {
         try {
             workoutCursor.moveToFirst();
             name = workoutCursor.getString(1);
-            Log.d("INSIDETRY", "name is "+name+"inside try");
+
         } catch (Exception e){
             Log.d("INDEXING", "caught exception"+e);
         }
-       /* while(!(workoutCursor.getInt(0)==number)) {
-            if (workoutCursor.getInt(0) == number) {
-                name = workoutCursor.getString(1);
-                Log.d("TITLE", "inside the loop it is "+name);
-            }
-                workoutCursor.moveToNext();
-
-        }*/
+       
         return name;
 
     }
@@ -208,10 +199,10 @@ public class ExerciseView extends ListActivity {
 
         ContentValues values=new ContentValues(2);
 
-        values.put(ExerciseDBHelper.TITLE, name);
-        values.put(ExerciseDBHelper.PID, PID);
+        values.put(DatabaseHelper.TITLE, name);
+        values.put(DatabaseHelper.PID, PID);
 
-        db.getWritableDatabase().insert("exercises", ExerciseDBHelper.TITLE, values);
+        db.getWritableDatabase().insert("exercises", DatabaseHelper.TITLE, values);
         refresh();
     }
 
@@ -227,7 +218,7 @@ public class ExerciseView extends ListActivity {
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 0);
 
-        db = new ExerciseDBHelper(this);
+        db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
@@ -236,7 +227,7 @@ public class ExerciseView extends ListActivity {
                 );
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
-                new String[]{ExerciseDBHelper.TITLE},
+                new String[]{DatabaseHelper.TITLE},
                 new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
