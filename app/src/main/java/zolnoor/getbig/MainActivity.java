@@ -39,7 +39,7 @@ public class MainActivity extends ListActivity {
         workoutsCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
-                                "FROM workouts ORDER BY title",
+                                "FROM workouts ORDER BY _ID",
                         null
                 );
         adapter = new SimpleCursorAdapter(this,
@@ -177,7 +177,7 @@ public class MainActivity extends ListActivity {
         workoutsCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title " +
-                                "FROM workouts ORDER BY title",
+                                "FROM workouts ORDER BY _ID",
                         null
                 );
         adapter = new SimpleCursorAdapter(this,

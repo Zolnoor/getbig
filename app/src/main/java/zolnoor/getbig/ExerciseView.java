@@ -34,9 +34,9 @@ public class ExerciseView extends ListActivity {
     private Cursor workoutCursor = null;
     public SimpleCursorAdapter adapter;
     private Intent nIntent;
-    private int PID, REPS, WEIGHT, NOTES, SETS;
+    private int PID, REPS, WEIGHT, NOTES, SETS, setss;
     private NumberPicker np;
-    private CheckBox reps, weight, notes;
+    private CheckBox reps, weight, notes, isSets;
 
 
     //calls updateList() in an attempt to get saved workouts
@@ -149,11 +149,15 @@ public class ExerciseView extends ListActivity {
     //Creates the parameter view, then inflates a dialog box with it
     //Made for deciding how the exercise fragment will appear
     public void fragParams(int i){
+        REPS = 0;
+        SETS = 0;
+        NOTES = 0;
+        WEIGHT = 0;
 
         View checkBoxView = View.inflate(this, R.layout.paramaters, null);
 
         try {
-            np = (NumberPicker) checkBoxView.findViewById(R.id.sets);
+           /* np = (NumberPicker) checkBoxView.findViewById(R.id.sets);
             np.setMaxValue(10);
             np.setMinValue(1);
             np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
@@ -161,7 +165,21 @@ public class ExerciseView extends ListActivity {
                 public void onValueChange(NumberPicker numberPicker, int i, int i2) {
                     SETS = i;
                 }
+            }); */
+
+            isSets = (CheckBox) checkBoxView.findViewById(R.id.isSets);
+            isSets.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b == true) {
+                        SETS = 1;
+                    }  if (b == false) {
+                        SETS = 0;
+                    }
+                }
             });
+
+
 
 
 
@@ -213,15 +231,20 @@ public class ExerciseView extends ListActivity {
                     .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            ContentValues values = new ContentValues(6);
-                            values.put(DatabaseHelper.PID, i);
-                            values.put(DatabaseHelper.SETS, SETS);
-                            values.put(DatabaseHelper.REPS, REPS);
-                            values.put(DatabaseHelper.NOTES, NOTES);
-                            values.put(DatabaseHelper.WEIGHT, WEIGHT);
-                            values.put(DatabaseHelper.CLICKED, 1);
-                            db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
-                            Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
+                            Log.d("VALUEOFSETS", "SETS is equa to "+SETS);
+                            if (SETS == 1) {
+                                DialogExtension(i, REPS, NOTES, WEIGHT);
+                            } else if (SETS==0){
+                                ContentValues values = new ContentValues(6);
+                                values.put(DatabaseHelper.PID, i);
+                                values.put(DatabaseHelper.SETS, SETS);
+                                values.put(DatabaseHelper.REPS, REPS);
+                                values.put(DatabaseHelper.NOTES, NOTES);
+                                values.put(DatabaseHelper.WEIGHT, WEIGHT);
+                                values.put(DatabaseHelper.CLICKED, 1);
+                                db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
+                                // Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
+                            }
                         }
                     })
                     .setNegativeButton("Cancel",
@@ -235,6 +258,50 @@ public class ExerciseView extends ListActivity {
         }catch (Exception e){
             Log.d("FUCK", "The exception was "+e);
         }
+    }
+
+    public void DialogExtension(final int P, final int Re, final int N, final int W){
+
+        View numberPickerView = View.inflate(this, R.layout.number_of_sets, null);
+
+        np = (NumberPicker) numberPickerView.findViewById(R.id.sets);
+        np.setMaxValue(10);
+        np.setMinValue(1);
+        np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+            @Override
+            public void onValueChange(NumberPicker numberPicker, int i, int i2) {
+               setss = i;
+            }
+        });
+
+
+        new AlertDialog.Builder(this)
+                .setTitle("Specify number of sets.")
+                .setMessage("Choose how many sets you will do for this exercise.")
+                .setView(numberPickerView)
+                .setCancelable(false)
+                .setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ContentValues values = new ContentValues(6);
+                        values.put(DatabaseHelper.PID, P);
+                        values.put(DatabaseHelper.SETS, setss);
+                        values.put(DatabaseHelper.REPS, Re);
+                        values.put(DatabaseHelper.NOTES, N);
+                        values.put(DatabaseHelper.WEIGHT, W);
+                        values.put(DatabaseHelper.CLICKED, 1);
+                        db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
+                        Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                // Do nothing.
+                            }
+                        }
+                )
+                .show();
     }
 
 
