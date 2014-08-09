@@ -7,14 +7,17 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Html;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -39,7 +42,8 @@ public class ExerciseView extends ListActivity {
     private CheckBox reps, weight, notes, isSets;
 
 
-    //calls updateList() in an attempt to get saved workouts
+    //gets PID from previous activity and uses it to set title. creates cursors and queries DB
+    //Also sets list adapter
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,12 +68,13 @@ public class ExerciseView extends ListActivity {
         registerForContextMenu(getListView());
         ActionBar ab = getActionBar();
         String title = getTitle(PID);
+        ab.setBackgroundDrawable(new ColorDrawable(0xffCE0F0F));
 
         if(title == null){
             ab.setTitle(R.string.null_message);
         }
         else{
-            ab.setTitle(title);
+            ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>"+title+"</b></font>"));
         }
 
     }
@@ -224,14 +229,14 @@ public class ExerciseView extends ListActivity {
 
 
             new AlertDialog.Builder(this)
-                    .setTitle("What kind of exercise?")
+                    .setTitle("What data would you like to record?")
                     .setMessage("Choose necessary parameters")
                     .setView(checkBoxView)
                     .setCancelable(false)
                     .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            Log.d("VALUEOFSETS", "SETS is equa to "+SETS);
+                            Log.d("VALUEOFSETS", "SETS is equal to "+SETS);
                             if (SETS == 1) {
                                 DialogExtension(i, REPS, NOTES, WEIGHT);
                             } else if (SETS==0){
@@ -255,11 +260,13 @@ public class ExerciseView extends ListActivity {
                             }
                     )
                     .show();
+
         }catch (Exception e){
             Log.d("FUCK", "The exception was "+e);
         }
     }
 
+    //Extends the first parameter dialog if the number of sets must be specified
     public void DialogExtension(final int P, final int Re, final int N, final int W){
 
         View numberPickerView = View.inflate(this, R.layout.number_of_sets, null);
@@ -310,9 +317,9 @@ public class ExerciseView extends ListActivity {
     //then processAdd() is called
     public void add() {
         final EditText input = new EditText(this);
-        new AlertDialog.Builder(this)
-                .setTitle("Create new workout")
-                .setMessage("Please name your workout!")
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+         builder.setTitle("Create new exercise")
+                .setMessage("Please name your exercise!")
                 .setView(input)
                 .setPositiveButton("Ok",
                         new DialogInterface.OnClickListener() {
@@ -330,10 +337,15 @@ public class ExerciseView extends ListActivity {
                                 // Do nothing.
                             }
                         }
-                )
-                .show();
+                );
+
+        AlertDialog dialog;
+        dialog = builder.create();
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        dialog.show();
     }
 
+    //Deletes an entry from the DB
     public void delete(final long rowId) {
         if (rowId > 0) {
             new AlertDialog.Builder(this)
@@ -374,6 +386,7 @@ public class ExerciseView extends ListActivity {
         refresh();
     }
 
+    //processes the deletion
     public void processDelete(long rowId){
         String[] args={String.valueOf(rowId)};
 

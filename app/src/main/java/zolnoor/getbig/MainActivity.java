@@ -1,15 +1,21 @@
 package zolnoor.getbig;
 
 
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
+import android.text.Html;
 import android.view.ContextMenu;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.os.Bundle;
@@ -63,6 +69,9 @@ public class MainActivity extends ListActivity {
     //populates the actionbar with that one item
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        ActionBar bar = getActionBar();
+        bar.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+        bar.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>GetBig</b></font>"));
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main, menu);
         return super.onCreateOptionsMenu(menu);
@@ -105,8 +114,18 @@ public class MainActivity extends ListActivity {
     //is called and the edittext field value is saved to a string
     public void add() {
         final EditText input = new EditText(this);
-        new AlertDialog.Builder(this)
-                .setTitle("Create new workout")
+        input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                if(b){
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }
+        });
+
+       AlertDialog.Builder builder = new AlertDialog.Builder(this);
+         builder.setTitle("Create new workout")
                 .setMessage("Please name your workout!")
                 .setView(input)
                 .setPositiveButton("Ok",
@@ -125,8 +144,13 @@ public class MainActivity extends ListActivity {
                                 // Do nothing.
                             }
                         }
-                )
-                .show();
+                );
+               // .getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+              //  .show();
+            AlertDialog dialog;
+                dialog = builder.create();
+                dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+                dialog.show();
     }
 
     public void delete(final long rowId) {
