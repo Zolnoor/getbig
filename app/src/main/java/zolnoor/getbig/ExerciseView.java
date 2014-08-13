@@ -103,7 +103,7 @@ public class ExerciseView extends ListActivity {
             name = workoutCursor.getString(1);
 
         } catch (Exception e){
-            Log.d("INDEXING", "caught exception"+e);
+            Log.d("INDEXING", "caught exception "+e);
         }
 
         return name;
@@ -153,7 +153,7 @@ public class ExerciseView extends ListActivity {
 
     //Creates the parameter view, then inflates a dialog box with it
     //Made for deciding how the exercise fragment will appear
-    public void fragParams(int i){
+    public void fragParams(final int igd){
         REPS = 0;
         SETS = 0;
         NOTES = 0;
@@ -238,16 +238,27 @@ public class ExerciseView extends ListActivity {
                         public void onClick(DialogInterface dialogInterface, int i) {
                             Log.d("VALUEOFSETS", "SETS is equal to "+SETS);
                             if (SETS == 1) {
-                                DialogExtension(i, REPS, NOTES, WEIGHT);
+                                DialogExtension(igd, REPS, NOTES, WEIGHT);
                             } else if (SETS==0){
                                 ContentValues values = new ContentValues(6);
-                                values.put(DatabaseHelper.PID, i);
-                                values.put(DatabaseHelper.SETS, SETS);
+                                int one=1;
+                                values.put(DatabaseHelper.PID, igd);
+                                values.put(DatabaseHelper.SETS, 1);
                                 values.put(DatabaseHelper.REPS, REPS);
                                 values.put(DatabaseHelper.NOTES, NOTES);
                                 values.put(DatabaseHelper.WEIGHT, WEIGHT);
-                                values.put(DatabaseHelper.CLICKED, 1);
+                                values.put(DatabaseHelper.CLICKED, one);
                                 db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
+
+                                ContentValues click = new ContentValues();
+                                click.put("CLICKED", 1);
+                                db.getWritableDatabase().update("exercises", click, "_id="+igd, null);
+                                Log.d("FIRSTDIALOG", "The ID was "+igd);
+                                refresh();
+
+                                    Intent intent = new Intent(getBaseContext(), ExercisePager.class);
+                                    intent.putExtra("PID", igd);
+                                    startActivity(intent);
                                 // Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                             }
                         }
@@ -277,7 +288,7 @@ public class ExerciseView extends ListActivity {
         np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker numberPicker, int i, int i2) {
-               setss = i;
+               setss = i2;
             }
         });
 
@@ -291,14 +302,25 @@ public class ExerciseView extends ListActivity {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         ContentValues values = new ContentValues(6);
+                        int one=1;
                         values.put(DatabaseHelper.PID, P);
                         values.put(DatabaseHelper.SETS, setss);
                         values.put(DatabaseHelper.REPS, Re);
                         values.put(DatabaseHelper.NOTES, N);
                         values.put(DatabaseHelper.WEIGHT, W);
-                        values.put(DatabaseHelper.CLICKED, 1);
-                        db.getWritableDatabase().insert("parameters", DatabaseHelper.SETS, values);
-                        Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
+                        values.put(DatabaseHelper.CLICKED, one);
+                        db.getWritableDatabase().insert("parameters", DatabaseHelper.CLICKED, values);
+
+                        ContentValues click = new ContentValues(1);
+                        click.put(DatabaseHelper.CLICKED, 1);
+                        db.getWritableDatabase().update("exercises", click, "_id="+P, null);
+                        Log.d("SECONDDIALOG", "the ID was "+P);
+                        refresh();
+
+                        Intent intent = new Intent(getBaseContext(), ExercisePager.class);
+                        intent.putExtra("PID", P);
+                        startActivity(intent);
+                        //Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel",
@@ -376,11 +398,11 @@ public class ExerciseView extends ListActivity {
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 0);
 
-        ContentValues values=new ContentValues(3);
+        ContentValues values=new ContentValues(2);
 
         values.put(DatabaseHelper.TITLE, name);
         values.put(DatabaseHelper.PID, PID);
-        values.put(DatabaseHelper.CLICKED, 0);
+        //values.put(DatabaseHelper.CLICKED, 0);
 
         db.getWritableDatabase().insert("exercises", DatabaseHelper.TITLE, values);
         refresh();
@@ -422,21 +444,36 @@ public class ExerciseView extends ListActivity {
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
+
+
+
         int bigID=-14;
         exerciseCursor.moveToFirst();
+        Log.d("CLICKING", "ID is "+exerciseCursor.getInt(0)+"versus position id which is "+id);
         while(bigID==-14){
             if(exerciseCursor.getInt(0)==id){
-                bigID=exerciseCursor.getInt(0);
+                bigID=(int)id;
+                Log.d("ONLISTCLICK", "The ID being passed everywhere is "+bigID);
 
-                if(exerciseCursor.getInt(2)==0){
+                if(exerciseCursor.getInt(2)!=1){
+                    Log.d("HASITBEENCLICKED", "The clicked value is "+exerciseCursor.getInt(1));
                     fragParams(bigID);
+
+
                 }
                 else{
                     //this is where I will open the fragment
+                    Intent intent = new Intent(this, ExercisePager.class);
+                    intent.putExtra("PID", bigID);
+                    startActivity(intent);
+
                 }
             }
             else{
                 exerciseCursor.moveToNext();
+            }
+            if(exerciseCursor.getInt(0)!=id){
+                Log.d("CLICKING", "SHIT THEY WERENT THE SAME");
             }
         }
     }

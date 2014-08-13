@@ -32,6 +32,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="zolnoor.getbig.MainActivity" />
         </activity>
+        <activity android:name=".ExercisePager"
+            android:label="ExercisePager"
+            android:parentActivityName="zolnoor.getbig.ExerciseView" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="zolnoor.getbig.MainActivity" />
+            </activity>
     </application>
 
 </manifest>
