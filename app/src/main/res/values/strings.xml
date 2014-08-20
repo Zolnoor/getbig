@@ -11,5 +11,8 @@
     <string name="weight">Weight</string>
     <string name="notes">Notes</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="repsfrag">Reps:</string>
+    <string name="weightfrag">Weight:</string>
+    <string name="noteshint">Enter details about this set...</string>
 
 </resources>

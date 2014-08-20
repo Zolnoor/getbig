@@ -1,5 +1,7 @@
 package zolnoor.getbig;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import android.app.Activity;
@@ -24,6 +26,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 
@@ -38,6 +42,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
     ViewPager mViewPager;
     Intent nIntent;
     int PID;
+    static int typeOfView;
     private Cursor paramCursor, exerciseCursor;
     private DatabaseHelper db, pdb;
 
@@ -49,6 +54,9 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         //Get PID from ExerciseView.java
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 1);
+
+        //set type of view
+        typeOfView = getTypeOfView(PID);
 
         //query database
         db = new DatabaseHelper(this);
@@ -105,6 +113,47 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                             .setText("Set "+(i+1))
                             .setTabListener(this));
         }
+    }
+
+    private int getTypeOfView(int parent){
+        int view=-1;
+
+        //set cursor and query paramater table
+        db = new DatabaseHelper(this);
+        paramCursor = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, reps, notes, weight " +
+                                "FROM parameters where pid="+parent,
+                        null
+                );
+        paramCursor.moveToFirst();
+
+        //Just one paramater
+        if(paramCursor.getInt(1)==1 && paramCursor.getInt(2)==0 && paramCursor.getInt(3)==0){
+            view = 0;
+        }
+        else if(paramCursor.getInt(1)==0 && paramCursor.getInt(2)==1 && paramCursor.getInt(3)==0){
+            view = 1;
+        }
+        else if(paramCursor.getInt(1)==0 && paramCursor.getInt(2)==0 && paramCursor.getInt(3)==1){
+            view = 2;
+        }
+        //Two paramaters
+        else if(paramCursor.getInt(1)==1 && paramCursor.getInt(2)==1 && paramCursor.getInt(3)==0){
+            view = 3;
+        }
+        else if(paramCursor.getInt(1)==0 && paramCursor.getInt(2)==1 && paramCursor.getInt(3)==1){
+            view = 4;
+        }
+        else if(paramCursor.getInt(1)==1 && paramCursor.getInt(2)==0 && paramCursor.getInt(3)==1){
+            view = 5;
+        }
+        //ALL THREE
+        else if(paramCursor.getInt(1)==1 && paramCursor.getInt(2)==1 && paramCursor.getInt(3)==1){
+            view = 6;
+        }
+
+        return view;
     }
 
     private String getTitle(Integer number){
@@ -173,7 +222,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
         @Override
         public Fragment getItem(int position) {
-            Fragment frag = new Fragment();
+            Fragment frag = new PlaceholderFragment();
             return  frag;
         }
 
@@ -202,6 +251,17 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
      * A placeholder fragment containing a simple view.
      */
     public static class PlaceholderFragment extends Fragment {
+        Spinner repsSpinner, weightSpinner;
+        List<String> repsList = new ArrayList<String>();
+        List<String> weightList = new ArrayList<String>();
+        int repsItem=0;
+        int weightItem=50;
+
+
+
+
+
+
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -226,8 +286,64 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_vp, container, false);
-            return rootView;
+            View rootView;
+
+            //populate lists and initialize spinners
+            for (repsItem=0;repsItem<51;repsItem++){
+                repsList.add(Integer.toString(repsItem));
+                weightList.add(Integer.toString(weightItem));
+                weightItem=weightItem+5;
+
+            }
+
+            ArrayAdapter<String> repsAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                    android.R.layout.simple_spinner_item, repsList);
+            ArrayAdapter<String> weightAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                    android.R.layout.simple_spinner_item, weightList);
+            repsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+            switch(typeOfView){
+                case 0:
+                    rootView = inflater.inflate(R.layout.fragment_vp, container, false);
+                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                    repsSpinner.setAdapter(repsAdapter);
+                    return rootView;
+                case 1:
+                    rootView = inflater.inflate(R.layout.fragment_vp1, container, false);
+                    return rootView;
+                case 2:
+                    rootView = inflater.inflate(R.layout.fragment_vp2, container, false);
+                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                    weightSpinner.setAdapter(weightAdapter);
+                    return rootView;
+                case 3:
+                    rootView = inflater.inflate(R.layout.fragment_vp3, container, false);
+                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                    repsSpinner.setAdapter(repsAdapter);
+                    return rootView;
+                case 4:
+                    rootView = inflater.inflate(R.layout.fragment_vp4, container, false);
+                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                    weightSpinner.setAdapter(weightAdapter);
+                    return rootView;
+                case 5:
+                    rootView = inflater.inflate(R.layout.fragment_vp5, container, false);
+                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                    repsSpinner.setAdapter(repsAdapter);
+                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                    weightSpinner.setAdapter(weightAdapter);
+                    return rootView;
+                case 6:
+                    rootView = inflater.inflate(R.layout.fragment_vp6, container, false);
+                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                    repsSpinner.setAdapter(repsAdapter);
+                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                    weightSpinner.setAdapter(weightAdapter);
+                    return rootView;
+            }
+            return null;
+
         }
     }
 

@@ -37,6 +37,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         android.util.Log.v("Workouts", "Upgrading database, which will destroy old date");
         db.execSQL("DROP TABLE IF EXISTS workouts");
         db.execSQL("DROP TABLE IF EXISTS exercises");
+        db.execSQL("DROP TABLE IF EXISTS parameters");
         onCreate(db);
     }
 

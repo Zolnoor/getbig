@@ -9,19 +9,24 @@
     tools:context=".ExercisePager$PlaceholderFragment">
 
     <TextView
-        android:id="@+id/reps"
-        android:text="Reps"
-        android:layout_width="wrap_content"
+        android:id="@+id/weight"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/repsSpinner"
-        android:textSize="40sp"
-         />
+        android:layout_width="fill_parent"
+        android:text="@string/weightfrag"
+        />
     <Spinner
-        android:id="@+id/repsSpinner"
+        android:id="@+id/weightSpinner"
         android:layout_width="60dp"
         android:layout_height="40dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true" />
+
+    <EditText
+        android:id="@+id/notes"
+        android:hint="@string/noteshint"
+        android:layout_width="fill_parent"
+        android:layout_height="100dp"
+        android:layout_below="@id/weight" />
 
 </RelativeLayout>
