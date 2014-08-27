@@ -37,7 +37,7 @@
             android:parentActivityName="zolnoor.getbig.ExerciseView" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="zolnoor.getbig.MainActivity" />
+                android:value="zolnoor.getbig.ExerciseView" />
             </activity>
     </application>
 

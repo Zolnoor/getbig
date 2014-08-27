@@ -1,6 +1,7 @@
 package zolnoor.getbig;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
@@ -10,6 +11,7 @@ import android.app.ActionBar;
 //import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 //import android.support.v13.app.FragmentPagerAdapter;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
@@ -19,6 +21,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -26,9 +29,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 public class ExercisePager extends FragmentActivity implements ActionBar.TabListener {
@@ -41,32 +46,37 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
      */
     ViewPager mViewPager;
     Intent nIntent;
-    int PID;
-    static int typeOfView;
-    private Cursor paramCursor, exerciseCursor;
+    public static int EID, WID;
+    String DATE;
+    static int typeOfView, numberOfSets;
+    private Cursor paramCursor, exerciseCursor, dataCursor;
     private DatabaseHelper db, pdb;
+    public static int currentTab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.view_pager);
 
-        //Get PID from ExerciseView.java
+        //Get EID from ExerciseView.java
         nIntent = getIntent();
-        PID = nIntent.getIntExtra("PID", 1);
+        EID = nIntent.getIntExtra("EID", 1);
+        WID = nIntent.getIntExtra("WID", 1);
 
         //set type of view
-        typeOfView = getTypeOfView(PID);
+        typeOfView = getTypeOfView(EID);
 
         //query database
         db = new DatabaseHelper(this);
         paramCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, sets, reps " +
-                                "FROM parameters where pid="+PID,
+                                "FROM parameters where pid="+EID,
                         null
                 );
         paramCursor.moveToFirst();
+        numberOfSets = paramCursor.getInt(1);
+
 
 
         // Set up the action bar.
@@ -74,7 +84,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         actionBar.setDisplayHomeAsUpEnabled(false);
 
-        String title = getTitle(PID);
+        String title = getTitle(EID);
         if(title==null){
             actionBar.setTitle("Null error!");
         }
@@ -102,8 +112,33 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             }
         });
 
+        Calendar c1 = Calendar.getInstance();
+        DATE = ""+c1.get(Calendar.DAY_OF_MONTH)+c1.get(Calendar.MONTH)+c1.get(Calendar.YEAR);
+
+        pdb = new DatabaseHelper(this);
+        dataCursor = pdb
+                .getWritableDatabase()
+                .rawQuery("SELECT * " +
+                        "FROM data where eid="+EID+" AND wid="+WID+" AND date="+DATE,
+                null
+        );
+
+        if(dataCursor.moveToFirst()){
+            dataCursor.close();
+        }
+        else{
+            ContentValues cv = new ContentValues(3);
+            cv.put(DatabaseHelper.WID, WID);
+            cv.put(DatabaseHelper.EID, EID);
+            cv.put(DatabaseHelper.DATE, DATE);
+            pdb.getWritableDatabase().insert("data", DatabaseHelper.WID, cv);
+            dataCursor.close();
+        }
+        pdb.close();
+
+
         // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < paramCursor.getInt(1); i++) {
+        for (int i = 0; i < numberOfSets; i++) {
             // Create a tab with text corresponding to the page title defined by
             // the adapter. Also specify this Activity object, which implements
             // the TabListener interface, as the callback (listener) for when
@@ -113,6 +148,13 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                             .setText("Set "+(i+1))
                             .setTabListener(this));
         }
+
+
+    }
+
+    public int getWID(){
+        int fudge = WID;
+        return WID;
     }
 
     private int getTypeOfView(int parent){
@@ -154,6 +196,17 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         }
 
         return view;
+    }
+
+
+    public int currentTab(int newCurrentTab){
+        currentTab = newCurrentTab+1;
+        Toast.makeText(getBaseContext(), "Tab "+(currentTab), Toast.LENGTH_SHORT).show();
+        return currentTab;
+    }
+
+    public static int currentTab(){
+        return currentTab;
     }
 
     private String getTitle(Integer number){
@@ -203,6 +256,8 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         // When the given tab is selected, switch to the corresponding page in
         // the ViewPager.
         mViewPager.setCurrentItem(tab.getPosition());
+        currentTab(tab.getPosition());
+
     }
 
     @Override
@@ -229,7 +284,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         @Override
         public int getCount() {
             // Show 3 total pages.
-            return 3;
+            return numberOfSets;
         }
 
         @Override
@@ -250,12 +305,14 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment{
         Spinner repsSpinner, weightSpinner;
         List<String> repsList = new ArrayList<String>();
         List<String> weightList = new ArrayList<String>();
         int repsItem=0;
         int weightItem=50;
+        Cursor dataCursor;
+        DatabaseHelper db;
 
 
 
@@ -286,7 +343,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView;
+            View rootView = null;
 
             //populate lists and initialize spinners
             for (repsItem=0;repsItem<51;repsItem++){
@@ -296,18 +353,23 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
             }
 
-            ArrayAdapter<String> repsAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+           ArrayAdapter<String> repsAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
                     android.R.layout.simple_spinner_item, repsList);
-            ArrayAdapter<String> weightAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+           ArrayAdapter<String> weightAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
                     android.R.layout.simple_spinner_item, weightList);
             repsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+
+
+
 
             switch(typeOfView){
                 case 0:
                     rootView = inflater.inflate(R.layout.fragment_vp, container, false);
                     repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
                     repsSpinner.setAdapter(repsAdapter);
+                    initializeSpinnerListener(repsSpinner, "reps");
                     return rootView;
                 case 1:
                     rootView = inflater.inflate(R.layout.fragment_vp1, container, false);
@@ -316,16 +378,19 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                     rootView = inflater.inflate(R.layout.fragment_vp2, container, false);
                     weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
                     weightSpinner.setAdapter(weightAdapter);
+                    initializeSpinnerListener(weightSpinner, "weight");
                     return rootView;
                 case 3:
                     rootView = inflater.inflate(R.layout.fragment_vp3, container, false);
                     repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
                     repsSpinner.setAdapter(repsAdapter);
+                    initializeSpinnerListener(repsSpinner, "reps");
                     return rootView;
                 case 4:
                     rootView = inflater.inflate(R.layout.fragment_vp4, container, false);
                     weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
                     weightSpinner.setAdapter(weightAdapter);
+                    initializeSpinnerListener(weightSpinner, "weight");
                     return rootView;
                 case 5:
                     rootView = inflater.inflate(R.layout.fragment_vp5, container, false);
@@ -333,6 +398,8 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                     repsSpinner.setAdapter(repsAdapter);
                     weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
                     weightSpinner.setAdapter(weightAdapter);
+                    initializeSpinnerListener(repsSpinner, "reps");
+                    initializeSpinnerListener(weightSpinner, "weight");
                     return rootView;
                 case 6:
                     rootView = inflater.inflate(R.layout.fragment_vp6, container, false);
@@ -340,11 +407,61 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                     repsSpinner.setAdapter(repsAdapter);
                     weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
                     weightSpinner.setAdapter(weightAdapter);
+                    initializeSpinnerListener(repsSpinner, "reps");
+                    initializeSpinnerListener(weightSpinner, "weight");
                     return rootView;
             }
-            return null;
+
+
+            return rootView;
 
         }
+
+        public void initializeSpinnerListener(final Spinner spins, final String repsorweight){
+
+
+            try {
+                spins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        String item = spins.getItemAtPosition(i).toString();
+                        int itemInt = Integer.parseInt(item);
+                        Log.d("SPINNAH", "made it here");
+
+                        Calendar c1 = Calendar.getInstance();
+                        String DATE = "" + c1.get(Calendar.DAY_OF_MONTH) + c1.get(Calendar.MONTH) + c1.get(Calendar.YEAR);
+                        db = new DatabaseHelper(getActivity());
+                        dataCursor = db
+                                .getReadableDatabase()
+                                .rawQuery("SELECT _ID " +
+                                                "FROM data where wid="+ExercisePager.WID+" AND date="+DATE,
+                                        null
+                                );
+                        dataCursor.moveToFirst();
+                        int tab = currentTab();
+
+                        String update = "UPDATE data SET "+repsorweight+"" + tab + " = " + itemInt + " WHERE wid = " + ExercisePager.WID + " AND date = " + DATE;
+                        db.getWritableDatabase().execSQL(update);
+                        Log.d("SPINNAH", update);
+                        Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT).show();
+
+
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> adapterView) {
+
+                    }
+                });
+            }catch(Exception e){
+                Log.d("SPINNAH", "The exception was "+e);
+            }
+
+
+        }
+
+
+
     }
 
 }

@@ -25,7 +25,10 @@ import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
-
+/**
+         REMINDER!!! I need to go through and make sure cursors and dbs get closed after all my querying.
+    Need to do that at some point - 08/22/14
+*/
 
 
 public class MainActivity extends ListActivity {

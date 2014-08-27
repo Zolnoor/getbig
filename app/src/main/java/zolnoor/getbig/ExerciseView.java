@@ -27,7 +27,10 @@ import android.widget.NumberPicker;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
-
+/**
+            REMINDER!!! I need to go through and make sure cursors and dbs get closed after all my querying.
+        Need to do that at some point - 08/22/14
+*/
 public class ExerciseView extends ListActivity {
 
     private static final int DELETE_ID = Menu.FIRST + 3;
@@ -68,7 +71,7 @@ public class ExerciseView extends ListActivity {
         registerForContextMenu(getListView());
         ActionBar ab = getActionBar();
         String title = getTitle(PID);
-        ab.setBackgroundDrawable(new ColorDrawable(0xffCE0F0F));
+        ab.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
 
         if(title == null){
             ab.setTitle(R.string.null_message);
@@ -162,15 +165,7 @@ public class ExerciseView extends ListActivity {
         View checkBoxView = View.inflate(this, R.layout.paramaters, null);
 
         try {
-           /* np = (NumberPicker) checkBoxView.findViewById(R.id.sets);
-            np.setMaxValue(10);
-            np.setMinValue(1);
-            np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
-                @Override
-                public void onValueChange(NumberPicker numberPicker, int i, int i2) {
-                    SETS = i;
-                }
-            }); */
+
 
             isSets = (CheckBox) checkBoxView.findViewById(R.id.isSets);
             isSets.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -183,11 +178,6 @@ public class ExerciseView extends ListActivity {
                     }
                 }
             });
-
-
-
-
-
 
             reps = (CheckBox) checkBoxView.findViewById(R.id.reps);
             reps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -257,7 +247,8 @@ public class ExerciseView extends ListActivity {
                                 refresh();
 
                                     Intent intent = new Intent(getBaseContext(), ExercisePager.class);
-                                    intent.putExtra("PID", igd);
+                                    intent.putExtra("EID", igd);
+                                    intent.putExtra("WID", PID);
                                     startActivity(intent);
                                 // Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                             }
@@ -318,7 +309,8 @@ public class ExerciseView extends ListActivity {
                         refresh();
 
                         Intent intent = new Intent(getBaseContext(), ExercisePager.class);
-                        intent.putExtra("PID", P);
+                        intent.putExtra("EID", P);
+                        intent.putExtra("WID", PID);
                         startActivity(intent);
                         //Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                     }
@@ -464,7 +456,8 @@ public class ExerciseView extends ListActivity {
                 else{
                     //this is where I will open the fragment
                     Intent intent = new Intent(this, ExercisePager.class);
-                    intent.putExtra("PID", bigID);
+                    intent.putExtra("EID", bigID);
+                    intent.putExtra("WID", PID);
                     startActivity(intent);
 
                 }
