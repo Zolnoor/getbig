@@ -1,10 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity" >
+    <item android:id="@+id/action_workout_calendar"
+        android:icon="@drawable/calendar2"
+        android:showAsAction="always"
+        android:title="View past workouts!"
+        />
+
     <item android:id="@+id/action_add_workout"
         android:icon="@drawable/ic_action_new"
         android:showAsAction="always"
         android:title="Add a Workout!"
         />
+
 
 </menu>

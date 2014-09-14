@@ -57,15 +57,15 @@ public class ExerciseView extends ListActivity {
         db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title, clicked " +
+                .rawQuery("SELECT _ID, title, clicked, fulldate " +
                                 "FROM exercises where pid = "+eyedee,
                         null
                 );
 
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
-                new String[]{DatabaseHelper.TITLE},
-                new int[]{R.id.textViewItem}, 0);
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
@@ -80,6 +80,12 @@ public class ExerciseView extends ListActivity {
             ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>"+title+"</b></font>"));
         }
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refresh();
     }
 
     @Override
@@ -117,7 +123,7 @@ public class ExerciseView extends ListActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main, menu);
+        inflater.inflate(R.menu.main2, menu);
         return super.onCreateOptionsMenu(menu);
 
     }
@@ -126,7 +132,7 @@ public class ExerciseView extends ListActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_add_workout:
+            case R.id.action_add_exercise:
                 add();
                 return true;
             default:
@@ -417,14 +423,14 @@ public class ExerciseView extends ListActivity {
         db = new DatabaseHelper(this);
         exerciseCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title, clicked " +
+                .rawQuery("SELECT _ID, title, clicked, fulldate " +
                                 "FROM exercises WHERE pid = "+PID,
                         null
                 );
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
-                new String[]{DatabaseHelper.TITLE},
-                new int[]{R.id.textViewItem}, 0);
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());

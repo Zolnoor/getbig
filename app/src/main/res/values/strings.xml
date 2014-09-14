@@ -14,5 +14,6 @@
     <string name="repsfrag">Reps:</string>
     <string name="weightfrag">Weight:</string>
     <string name="noteshint">Enter details about this set...</string>
+    <string name="choose_date">Choose the date to view workouts completed.</string>
 
 </resources>

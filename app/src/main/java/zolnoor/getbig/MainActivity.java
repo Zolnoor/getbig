@@ -2,6 +2,7 @@ package zolnoor.getbig;
 
 
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ContentValues;
@@ -12,11 +13,13 @@ import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
 import android.text.Html;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.os.Bundle;
 import android.view.Menu;
@@ -24,8 +27,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
-/**
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/*
          REMINDER!!! I need to go through and make sure cursors and dbs get closed after all my querying.
     Need to do that at some point - 08/22/14
 */
@@ -37,6 +45,8 @@ public class MainActivity extends ListActivity {
     private DatabaseHelper db = null;
     private Cursor workoutsCursor = null;
     public SimpleCursorAdapter adapter;
+    public static boolean isViewingPast;
+    public static String currentViewingDate;
 
 
     @Override
@@ -47,14 +57,17 @@ public class MainActivity extends ListActivity {
         db = new DatabaseHelper(this);
         workoutsCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title " +
+                .rawQuery("SELECT _ID, title, fulldate " +
                                 "FROM workouts ORDER BY _ID",
                         null
                 );
+       // workoutsCursor.moveToFirst();
+        //Log.d("SHITFUCK", ""+workoutsCursor.getString(2));
+
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, workoutsCursor,
-                new String[]{DatabaseHelper.TITLE},
-                new int[]{R.id.textViewItem}, 0);
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
@@ -69,15 +82,35 @@ public class MainActivity extends ListActivity {
         db.close();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        refresh();
+    }
+
     //populates the actionbar with that one item
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        ActionBar bar = getActionBar();
-        bar.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
-        bar.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>GetBig</b></font>"));
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main, menu);
-        return super.onCreateOptionsMenu(menu);
+
+        if(!isViewingPast) {
+            ActionBar bar = getActionBar();
+            bar.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+            bar.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>GetBig</b></font>"));
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.main, menu);
+            return super.onCreateOptionsMenu(menu);
+        }
+        else{
+            ActionBar bar = getActionBar();
+            bar.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+            bar.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>Workouts on "+currentViewingDate+"</b></font>"));
+            MenuInflater inflater = getMenuInflater();
+            inflater.inflate(R.menu.main3, menu);
+            return super.onCreateOptionsMenu(menu);
+        }
+
+
 
     }
 
@@ -87,6 +120,12 @@ public class MainActivity extends ListActivity {
         switch (item.getItemId()) {
             case R.id.action_add_workout:
                 add();
+                return true;
+            case R.id.action_workout_calendar:
+                calendarDialog();
+                return true;
+            case R.id.return_main_view:
+                refresh();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -112,6 +151,8 @@ public class MainActivity extends ListActivity {
         }
         return (super.onOptionsItemSelected(item));
     }
+
+
 
     //Opens a dialog button with an edittext, positive and negative button. if ok is selected, showThatShit()
     //is called and the edittext field value is saved to a string
@@ -148,8 +189,7 @@ public class MainActivity extends ListActivity {
                             }
                         }
                 );
-               // .getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-              //  .show();
+
             AlertDialog dialog;
                 dialog = builder.create();
                 dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
@@ -181,6 +221,48 @@ public class MainActivity extends ListActivity {
         }
     }
 
+    public void calendarDialog(){
+
+
+        View calendarDialog = View.inflate(this, R.layout.calendar, null);
+
+        final DatePicker datePicker = (DatePicker) calendarDialog.findViewById(R.id.datePicker);
+
+        new AlertDialog.Builder(this)
+                .setTitle("View past workouts!")
+                .setView(calendarDialog)
+                .setPositiveButton("View", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String month, day;
+
+                        month = ""+(datePicker.getMonth()+1);
+                        day = ""+datePicker.getDayOfMonth();
+
+                        if(datePicker.getDayOfMonth()<10){
+                            day="0"+datePicker.getDayOfMonth();
+                        }
+                        if((datePicker.getMonth()+1)<10){
+                            month="0"+(datePicker.getMonth()+1);
+                        }
+                        String DATE = ""+datePicker.getYear()+month+day;
+                        int dateInt = Integer.parseInt(DATE);
+                        refresh(dateInt);
+                        Toast.makeText(getBaseContext(), ""+dateInt, Toast.LENGTH_SHORT).show();
+
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        //do nuttin
+                    }
+                })
+                .show();
+
+
+    }
+
     public void processAdd(String name){
         ContentValues values=new ContentValues(1);
 
@@ -203,17 +285,62 @@ public class MainActivity extends ListActivity {
         db = new DatabaseHelper(this);
         workoutsCursor = db
                 .getReadableDatabase()
-                .rawQuery("SELECT _ID, title " +
+                .rawQuery("SELECT _ID, title, fulldate " +
                                 "FROM workouts ORDER BY _ID",
                         null
                 );
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, workoutsCursor,
-                new String[]{DatabaseHelper.TITLE},
-                new int[]{R.id.textViewItem}, 0);
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
+        isViewingPast=false;
+        invalidateOptionsMenu();
+
+        //workoutsCursor.close();
+        //db.close();
+
+    }
+
+    public void refresh(int dateInt){
+        db = new DatabaseHelper(this);
+        workoutsCursor = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, title, fulldate " +
+                                "FROM workouts WHERE date = "+dateInt,
+                        null
+                );
+        adapter = new SimpleCursorAdapter(this,
+                R.layout.list_view_item, workoutsCursor,
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+
+        setListAdapter(adapter);
+        registerForContextMenu(getListView());
+        isViewingPast=true;
+
+        String fullDate="";
+        String dayte = Integer.toString(dateInt);
+
+        SimpleDateFormat smf = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat two = new SimpleDateFormat("MM/dd/yyyy");
+        //SimpleDateFormat two = new SimpleDateFormat("EEE MMM dd, yyyy");
+        try {
+            currentViewingDate = two.format(smf.parse(dayte));
+        }catch (Exception e){
+            Log.d("Date", "exception was "+e);
+            currentViewingDate="wow the date shit didnt work";
+        }
+
+
+        invalidateOptionsMenu();
+
+        //workoutsCursor.close();
+        //db.close();
+
+
     }
 
     //Finds the _ID of the workout clicked, puts it in an intent and sends it to

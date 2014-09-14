@@ -16,14 +16,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!--
-            <activity android:name=".WorkoutView"
-            android:parentActivityName="zolnoor.getbig.MainActivity" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="zolnoor.getbig.MainActivity" />
-            </activity>
-        -->
         <activity
             android:name=".ExerciseView"
             android:label="@string/title_activity_exercise_view"

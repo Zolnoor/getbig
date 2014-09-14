@@ -1,5 +1,6 @@
 package zolnoor.getbig;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -47,8 +48,8 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
     ViewPager mViewPager;
     Intent nIntent;
     public static int EID, WID;
-    String DATE;
-    static int typeOfView, numberOfSets;
+    String DATE, day, month, year;
+    static int typeOfView, numberOfSets, dateInt;
     private Cursor paramCursor, exerciseCursor, dataCursor;
     private DatabaseHelper db, pdb;
     public static int currentTab;
@@ -113,13 +114,27 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         });
 
         Calendar c1 = Calendar.getInstance();
-        DATE = ""+c1.get(Calendar.DAY_OF_MONTH)+c1.get(Calendar.MONTH)+c1.get(Calendar.YEAR);
+        if(c1.get(Calendar.DAY_OF_MONTH)<10){
+            day="0"+c1.get(Calendar.DAY_OF_MONTH);
+        }
+            else {
+                day=""+c1.get(Calendar.DAY_OF_MONTH);
+            }
+
+        if((c1.get(Calendar.MONTH)+1)<10){
+            month="0"+(c1.get(Calendar.MONTH)+1);
+        }
+            else{
+            month=""+(c1.get(Calendar.MONTH)+1);
+        }
+        DATE = ""+c1.get(Calendar.YEAR)+month+day;
+        dateInt = Integer.parseInt(DATE);
 
         pdb = new DatabaseHelper(this);
         dataCursor = pdb
                 .getWritableDatabase()
                 .rawQuery("SELECT * " +
-                        "FROM data where eid="+EID+" AND wid="+WID+" AND date="+DATE,
+                        "FROM data where eid="+EID+" AND wid="+WID+" AND date="+dateInt,
                 null
         );
 
@@ -130,7 +145,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             ContentValues cv = new ContentValues(3);
             cv.put(DatabaseHelper.WID, WID);
             cv.put(DatabaseHelper.EID, EID);
-            cv.put(DatabaseHelper.DATE, DATE);
+            cv.put(DatabaseHelper.DATE, dateInt);
             pdb.getWritableDatabase().insert("data", DatabaseHelper.WID, cv);
             dataCursor.close();
         }
@@ -152,10 +167,6 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
     }
 
-    public int getWID(){
-        int fudge = WID;
-        return WID;
-    }
 
     private int getTypeOfView(int parent){
         int view=-1;
@@ -300,6 +311,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             }
             return null;
         }
+
     }
 
     /**
@@ -311,7 +323,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         List<String> weightList = new ArrayList<String>();
         int repsItem=0;
         int weightItem=50;
-        Cursor dataCursor;
+        Cursor dataCursor, excCursor, woutCursor;
         DatabaseHelper db;
 
 
@@ -424,26 +436,39 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                 spins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
                     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                        String DATE, month, day;
                         String item = spins.getItemAtPosition(i).toString();
                         int itemInt = Integer.parseInt(item);
                         Log.d("SPINNAH", "made it here");
 
                         Calendar c1 = Calendar.getInstance();
-                        String DATE = "" + c1.get(Calendar.DAY_OF_MONTH) + c1.get(Calendar.MONTH) + c1.get(Calendar.YEAR);
+
+                        month = ""+c1.get(Calendar.MONTH);
+                        day = ""+c1.get(Calendar.DAY_OF_MONTH);
+
+                        if(c1.get(Calendar.DAY_OF_MONTH)<10){
+                            day="0"+c1.get(Calendar.DAY_OF_MONTH);
+                        }
+                        if((c1.get(Calendar.MONTH)+1)<10){
+                            month="0"+(c1.get(Calendar.MONTH)+1);
+                        }
+                        DATE = ""+c1.get(Calendar.YEAR)+month+day;
+                        int dateInt = Integer.parseInt(DATE);
                         db = new DatabaseHelper(getActivity());
                         dataCursor = db
                                 .getReadableDatabase()
                                 .rawQuery("SELECT _ID " +
-                                                "FROM data where wid="+ExercisePager.WID+" AND date="+DATE,
+                                                "FROM data WHERE eid="+ExercisePager.EID+" AND date="+dateInt,
                                         null
                                 );
                         dataCursor.moveToFirst();
                         int tab = currentTab();
 
-                        String update = "UPDATE data SET "+repsorweight+"" + tab + " = " + itemInt + " WHERE wid = " + ExercisePager.WID + " AND date = " + DATE;
+                        String update = "UPDATE data SET "+repsorweight+"" + tab + " = " + itemInt + " WHERE eid = " + ExercisePager.EID + " AND date = " + dateInt;
                         db.getWritableDatabase().execSQL(update);
                         Log.d("SPINNAH", update);
                         Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT).show();
+                        updateDate(dateInt);
 
 
                     }
@@ -456,6 +481,57 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             }catch(Exception e){
                 Log.d("SPINNAH", "The exception was "+e);
             }
+
+
+        }
+
+        public void updateDate(int recentDate){
+            String Update;
+            int workoutID;
+            String fullDate="";
+            String dayte = Integer.toString(recentDate);
+
+            SimpleDateFormat smf = new SimpleDateFormat("yyyyMMdd");
+            SimpleDateFormat two = new SimpleDateFormat("MM/dd/yyyy");
+            //SimpleDateFormat two = new SimpleDateFormat("EEE MMM dd, yyyy");
+            try {
+                fullDate = two.format(smf.parse(dayte));
+            }catch (Exception e){
+                Log.d("Date", "exception was "+e);
+                fullDate="wow the date shit didnt work";
+            }
+
+            db = new DatabaseHelper(getActivity());
+            excCursor = db
+                    .getWritableDatabase()
+                    .rawQuery("SELECT _ID, pid " +
+                                    "FROM exercises WHERE _ID="+ExercisePager.EID,
+                            null
+                    );
+            excCursor.moveToFirst();
+            Update = "UPDATE exercises SET date = "+recentDate+" WHERE _ID="+ExercisePager.EID;
+            db.getWritableDatabase().execSQL(Update);
+
+            Update = "UPDATE exercises SET fulldate = '"+fullDate+"' WHERE _ID="+ExercisePager.EID;
+            Log.d("UPDATEDATE", Update);
+            db.getWritableDatabase().execSQL(Update);
+            workoutID = excCursor.getInt(1);
+
+            excCursor.close();
+
+            woutCursor = db
+                    .getWritableDatabase()
+                    .rawQuery("SELECT _ID " +
+                                    "FROM workouts WHERE _ID="+workoutID,
+                            null
+                    );
+            Update = "UPDATE workouts SET date = "+recentDate+" WHERE _ID="+workoutID;
+            db.getWritableDatabase().execSQL(Update);
+           // Update = "UPDATE workouts SET date = "+recentDate+" AND fulldate = "+fullDate+" WHERE _ID="+workoutID;
+            Update = "UPDATE workouts SET fulldate = '"+fullDate+"' WHERE _ID="+workoutID;
+            db.getWritableDatabase().execSQL(Update);
+            woutCursor.close();
+            db.close();
 
 
         }
