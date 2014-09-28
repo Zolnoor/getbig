@@ -15,6 +15,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -44,9 +45,11 @@ public class MainActivity extends ListActivity {
     private static final int DELETE_ID = Menu.FIRST + 3;
     private DatabaseHelper db = null;
     private Cursor workoutsCursor = null;
+    private Cursor cerser;
     public SimpleCursorAdapter adapter;
     public static boolean isViewingPast;
     public static String currentViewingDate;
+    public static int currentViewingDateInt;
 
 
     @Override
@@ -85,8 +88,24 @@ public class MainActivity extends ListActivity {
     @Override
     public void onResume() {
         super.onResume();
+        if(isViewingPast){
+         refresh(currentViewingDateInt);
+        }
+        else {
+            refresh();
+        }
+    }
 
-        refresh();
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event){
+        if(keyCode == KeyEvent.KEYCODE_BACK){
+            if(isViewingPast){
+                refresh();
+                return true;
+            }
+            return super.onKeyDown(keyCode,event);
+        }
+        return false;
     }
 
     //populates the actionbar with that one item
@@ -269,6 +288,7 @@ public class MainActivity extends ListActivity {
         values.put(DatabaseHelper.TITLE, name);
 
         db.getWritableDatabase().insert("workouts", DatabaseHelper.TITLE, values);
+        db.close();
         refresh();
     }
 
@@ -276,6 +296,7 @@ public class MainActivity extends ListActivity {
         String[] args={String.valueOf(rowId)};
 
         db.getWritableDatabase().delete("workouts", "_ID=?", args);
+        db.close();
         refresh();
     }
 
@@ -305,17 +326,51 @@ public class MainActivity extends ListActivity {
     }
 
     public void refresh(int dateInt){
+        int lastWidAdded=-1;
+        String widsQueried="";
+        currentViewingDateInt=dateInt;
         db = new DatabaseHelper(this);
+
+        cerser = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, wid " +
+                                "FROM data WHERE date = "+dateInt,
+                        null
+                );
+        if(cerser.moveToFirst()){
+            cerser.moveToFirst();
+            widsQueried=""+cerser.getInt(1);
+            lastWidAdded=cerser.getInt(1);
+            while(cerser.moveToNext()){
+                if(lastWidAdded == cerser.getInt(1)){
+
+                }
+                else{
+                    lastWidAdded=cerser.getInt(1);
+                    Log.d("WIDSQUERY", "this one equals "+lastWidAdded);
+
+                        widsQueried=widsQueried+" OR _ID = "+lastWidAdded;
+                        Log.d("WIDSQUERY", "the string after the else is "+widsQueried);
+
+
+                }
+
+
+            }
+        }
+        //widsQueried=widsQueried+lastWidAdded;
+
+
         workoutsCursor = db
                 .getReadableDatabase()
                 .rawQuery("SELECT _ID, title, fulldate " +
-                                "FROM workouts WHERE date = "+dateInt,
+                                "FROM workouts WHERE _ID = "+widsQueried,
                         null
                 );
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, workoutsCursor,
                 new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
-                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+                new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
@@ -352,11 +407,11 @@ public class MainActivity extends ListActivity {
         workoutsCursor.moveToFirst();
         while(bigID==-14){
             if(workoutsCursor.getInt(0)==id){
-                bigID=workoutsCursor.getInt(0);
-                Intent intent = new Intent(this, ExerciseView.class);
-                intent.putExtra("PID", bigID);
-                startActivity(intent);
 
+                    bigID = workoutsCursor.getInt(0);
+                    Intent intent = new Intent(this, ExerciseView.class);
+                    intent.putExtra("PID", bigID);
+                    startActivity(intent);
             }
             else{
                 workoutsCursor.moveToNext();

@@ -38,6 +38,7 @@ public class ExerciseView extends ListActivity {
     private DatabaseHelper pdb = null;
     private Cursor exerciseCursor = null;
     private Cursor workoutCursor = null;
+    private Cursor cerser;
     public SimpleCursorAdapter adapter;
     private Intent nIntent;
     private int PID, REPS, WEIGHT, NOTES, SETS, setss;
@@ -53,31 +54,97 @@ public class ExerciseView extends ListActivity {
         setContentView(R.layout.activity_main);
         nIntent = getIntent();
         PID = nIntent.getIntExtra("PID", 0);
-        String eyedee = Integer.toString(PID);
-        db = new DatabaseHelper(this);
-        exerciseCursor = db
-                .getReadableDatabase()
-                .rawQuery("SELECT _ID, title, clicked, fulldate " +
-                                "FROM exercises where pid = "+eyedee,
-                        null
-                );
 
-        adapter = new SimpleCursorAdapter(this,
-                R.layout.list_view_item, exerciseCursor,
-                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
-                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+        if(!MainActivity.isViewingPast) {
 
-        setListAdapter(adapter);
-        registerForContextMenu(getListView());
-        ActionBar ab = getActionBar();
-        String title = getTitle(PID);
-        ab.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+            db = new DatabaseHelper(this);
+            exerciseCursor = db
+                    .getReadableDatabase()
+                    .rawQuery("SELECT _ID, title, clicked, fulldate " +
+                                    "FROM exercises where pid = " + PID,
+                            null
+                    );
 
-        if(title == null){
-            ab.setTitle(R.string.null_message);
+            adapter = new SimpleCursorAdapter(this,
+                    R.layout.list_view_item, exerciseCursor,
+                    new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                    new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+
+            setListAdapter(adapter);
+            registerForContextMenu(getListView());
+            ActionBar ab = getActionBar();
+            String title = getTitle(PID);
+            ab.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+
+            if (title == null) {
+                ab.setTitle(R.string.null_message);
+            } else {
+                ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>" + title + "</b></font>"));
+            }
         }
         else{
-            ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>"+title+"</b></font>"));
+            int lastEidAdded=-1;
+            String eidsQueried="";
+            Log.d("EIDS", "Is ti doing this");
+
+            ActionBar ab = getActionBar();
+            String title = getTitle(PID);
+            ab.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
+
+            if (title == null) {
+                ab.setTitle(R.string.null_message);
+            } else {
+                ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>" + title + " (" + MainActivity.currentViewingDate+")</b></font>"));
+            }
+
+
+
+
+
+            db = new DatabaseHelper(this);
+            cerser = db
+                    .getReadableDatabase()
+                    .rawQuery("SELECT _ID, eid " +
+                                    "FROM data WHERE date = "+MainActivity.currentViewingDateInt,
+                            null
+                    );
+            Log.d("EIDS","The current viewing date is "+MainActivity.currentViewingDateInt);
+            if(cerser.moveToFirst()){
+                cerser.moveToFirst();
+                eidsQueried=""+cerser.getInt(1);
+                lastEidAdded=cerser.getInt(1);
+                while(cerser.moveToNext()){
+                    if(lastEidAdded == cerser.getInt(1)){
+
+                    }
+                    else{
+                        lastEidAdded=cerser.getInt(1);
+                        Log.d("EIDSQUERY", "this one equals "+lastEidAdded);
+
+                            eidsQueried=eidsQueried+" OR _ID = "+lastEidAdded;
+                            Log.d("EIDSQUERY", "the string after the else is "+eidsQueried);
+                        }
+                }
+            }
+
+
+
+            exerciseCursor = db
+                    .getReadableDatabase()
+                    .rawQuery("SELECT _ID, title, clicked, fulldate " +
+                                    "FROM exercises where (_ID = "+eidsQueried+") AND pid = " + PID,
+                            null
+                    );
+
+            adapter = new SimpleCursorAdapter(this,
+                    R.layout.list_view_item, exerciseCursor,
+                    new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                    new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+
+            setListAdapter(adapter);
+            registerForContextMenu(getListView());
+
+
         }
 
     }
@@ -85,7 +152,12 @@ public class ExerciseView extends ListActivity {
     @Override
     public void onResume() {
         super.onResume();
-        refresh();
+        if(!MainActivity.isViewingPast){
+            refresh();
+        }
+        else{
+            refresh(MainActivity.currentViewingDateInt);
+        }
     }
 
     @Override
@@ -427,6 +499,57 @@ public class ExerciseView extends ListActivity {
                                 "FROM exercises WHERE pid = "+PID,
                         null
                 );
+        adapter = new SimpleCursorAdapter(this,
+                R.layout.list_view_item, exerciseCursor,
+                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
+                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+
+        setListAdapter(adapter);
+        registerForContextMenu(getListView());
+    }
+
+    public void refresh(int dateInt){
+
+        int lastEidAdded=-1;
+        String eidsQueried="";
+        Log.d("EIDS", "Is ti doing this");
+
+
+        db = new DatabaseHelper(this);
+        cerser = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, eid " +
+                                "FROM data WHERE date = "+dateInt,
+                        null
+                );
+        Log.d("EIDS","The current viewing date is "+dateInt);
+        if(cerser.moveToFirst()){
+            cerser.moveToFirst();
+            eidsQueried=""+cerser.getInt(1);
+            lastEidAdded=cerser.getInt(1);
+            while(cerser.moveToNext()){
+                if(lastEidAdded == cerser.getInt(1)){
+
+                }
+                else{
+                    lastEidAdded=cerser.getInt(1);
+                    Log.d("EIDSQUERY", "this one equals "+lastEidAdded);
+
+                    eidsQueried=eidsQueried+" OR _ID = "+lastEidAdded;
+                    Log.d("EIDSQUERY", "the string after the else is "+eidsQueried);
+                }
+            }
+        }
+
+
+
+        exerciseCursor = db
+                .getReadableDatabase()
+                .rawQuery("SELECT _ID, title, clicked, fulldate " +
+                                "FROM exercises where (_ID = "+eidsQueried+") AND pid = " + PID,
+                        null
+                );
+
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
                 new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},

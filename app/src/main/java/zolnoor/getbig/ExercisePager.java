@@ -21,6 +21,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 
 import android.util.Log;
@@ -40,10 +41,11 @@ import android.widget.Toast;
 public class ExercisePager extends FragmentActivity implements ActionBar.TabListener {
 
 
-    SectionsPagerAdapter mSectionsPagerAdapter;
+   SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will host the section contents.
+     *
      */
     ViewPager mViewPager;
     Intent nIntent;
@@ -110,6 +112,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             @Override
             public void onPageSelected(int position) {
                 actionBar.setSelectedNavigationItem(position);
+                Log.d("InsideonPageSelected", "The position is "+position);
             }
         });
 
@@ -149,6 +152,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             pdb.getWritableDatabase().insert("data", DatabaseHelper.WID, cv);
             dataCursor.close();
         }
+        paramCursor.close();
         pdb.close();
 
 
@@ -167,7 +171,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
     }
 
-
+    //Decides which view will be inflated based on paramaters set at exercise creation
     private int getTypeOfView(int parent){
         int view=-1;
 
@@ -212,7 +216,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
     public int currentTab(int newCurrentTab){
         currentTab = newCurrentTab+1;
-        Toast.makeText(getBaseContext(), "Tab "+(currentTab), Toast.LENGTH_SHORT).show();
+
         return currentTab;
     }
 
@@ -268,6 +272,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         // the ViewPager.
         mViewPager.setCurrentItem(tab.getPosition());
         currentTab(tab.getPosition());
+        Log.d("InsideonTabSelected", "Passing currentTab("+tab.getPosition()+")");
 
     }
 
@@ -280,7 +285,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
     }
 
 
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    public class SectionsPagerAdapter extends FragmentStatePagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -288,13 +293,13 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
         @Override
         public Fragment getItem(int position) {
-            Fragment frag = new PlaceholderFragment();
-            return  frag;
+
+            return  PlaceholderFragment.newInstance(position+1);
         }
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
+
             return numberOfSets;
         }
 
@@ -319,15 +324,14 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
      */
     public static class PlaceholderFragment extends Fragment{
         Spinner repsSpinner, weightSpinner;
+        TextView repsText, weightText, notesText;
         List<String> repsList = new ArrayList<String>();
         List<String> weightList = new ArrayList<String>();
         int repsItem=0;
         int weightItem=50;
+        int sectionArgument;
         Cursor dataCursor, excCursor, woutCursor;
         DatabaseHelper db;
-
-
-
 
 
 
@@ -344,7 +348,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         public static PlaceholderFragment newInstance(int sectionNumber) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            args.putInt("sect", sectionNumber);
             fragment.setArguments(args);
             return fragment;
         }
@@ -356,73 +360,141 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = null;
+            sectionArgument = getArguments() != null ? getArguments().getInt("sect") : 1;
 
-            //populate lists and initialize spinners
-            for (repsItem=0;repsItem<51;repsItem++){
-                repsList.add(Integer.toString(repsItem));
-                weightList.add(Integer.toString(weightItem));
-                weightItem=weightItem+5;
+            if(!MainActivity.isViewingPast) {
 
+
+                //populate lists and initialize spinners
+                for (repsItem = 0; repsItem < 51; repsItem++) {
+                    repsList.add(Integer.toString(repsItem));
+                    weightList.add(Integer.toString(weightItem));
+                    weightItem = weightItem + 5;
+
+                }
+
+                ArrayAdapter<String> repsAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                        android.R.layout.simple_spinner_item, repsList);
+                ArrayAdapter<String> weightAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
+                        android.R.layout.simple_spinner_item, weightList);
+                repsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+
+                switch (typeOfView) {
+                    case 0:
+                        rootView = inflater.inflate(R.layout.fragment_vp, container, false);
+                        repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                        repsSpinner.setAdapter(repsAdapter);
+                        initializeSpinnerListener(repsSpinner, "reps");
+                        return rootView;
+                    case 1:
+                        rootView = inflater.inflate(R.layout.fragment_vp1, container, false);
+                        return rootView;
+                    case 2:
+                        rootView = inflater.inflate(R.layout.fragment_vp2, container, false);
+                        weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                        weightSpinner.setAdapter(weightAdapter);
+                        initializeSpinnerListener(weightSpinner, "weight");
+                        return rootView;
+                    case 3:
+                        rootView = inflater.inflate(R.layout.fragment_vp3, container, false);
+                        repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                        repsSpinner.setAdapter(repsAdapter);
+                        initializeSpinnerListener(repsSpinner, "reps");
+                        return rootView;
+                    case 4:
+                        rootView = inflater.inflate(R.layout.fragment_vp4, container, false);
+                        weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                        weightSpinner.setAdapter(weightAdapter);
+                        initializeSpinnerListener(weightSpinner, "weight");
+                        return rootView;
+                    case 5:
+                        rootView = inflater.inflate(R.layout.fragment_vp5, container, false);
+                        repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                        repsSpinner.setAdapter(repsAdapter);
+                        weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                        weightSpinner.setAdapter(weightAdapter);
+                        initializeSpinnerListener(repsSpinner, "reps");
+                        initializeSpinnerListener(weightSpinner, "weight");
+                        return rootView;
+                    case 6:
+                        rootView = inflater.inflate(R.layout.fragment_vp6, container, false);
+                        repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
+                        repsSpinner.setAdapter(repsAdapter);
+                        weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
+                        weightSpinner.setAdapter(weightAdapter);
+                        initializeSpinnerListener(repsSpinner, "reps");
+                        initializeSpinnerListener(weightSpinner, "weight");
+                        return rootView;
+                }
+            }
+            else{
+                db = new DatabaseHelper(getActivity());
+                dataCursor = db
+                        .getReadableDatabase()
+                        .rawQuery("SELECT reps"+sectionArgument+", weight"+sectionArgument+", notes"+sectionArgument+" " +
+                                        "FROM data WHERE eid="+ExercisePager.EID+" AND date="+MainActivity.currentViewingDateInt,
+                                null
+                        );
+                dataCursor.moveToFirst();
+                Log.d("DISPLAYPAST", "The tab being passed to the DB is tab #"+currentTab());
+
+
+                switch (typeOfView){
+                    case 0:
+                        rootView = inflater.inflate(R.layout.fragment_past, container, false);
+                        repsText = (TextView) rootView.findViewById(R.id.repsDisplay);
+                        repsText.setText(Integer.toString(dataCursor.getInt(0)));
+                        return rootView;
+                    case 1:
+                        rootView = inflater.inflate(R.layout.fragment_past1, container, false);
+                        notesText = (TextView) rootView.findViewById(R.id.notesDisplay);
+                        notesText.setText(dataCursor.getString(2));
+                        return rootView;
+                    case 2:
+                        rootView = inflater.inflate(R.layout.fragment_past2, container, false);
+                        weightText = (TextView) rootView.findViewById(R.id.weightDisplay);
+                        weightText.setText(Integer.toString(dataCursor.getInt(1)));
+
+                        return rootView;
+                    case 3:
+                        rootView = inflater.inflate(R.layout.fragment_past3, container, false);
+                        repsText = (TextView) rootView.findViewById(R.id.repsDisplay);
+                        repsText.setText(Integer.toString(dataCursor.getInt(0)));
+                        notesText = (TextView) rootView.findViewById(R.id.notesDisplay);
+                        notesText.setText(dataCursor.getString(2));
+                        return rootView;
+                    case 4:
+                        rootView = inflater.inflate(R.layout.fragment_past4, container, false);
+                        weightText = (TextView) rootView.findViewById(R.id.weightDisplay);
+                        weightText.setText(Integer.toString(dataCursor.getInt(1)));
+                        notesText = (TextView) rootView.findViewById(R.id.notesDisplay);
+                        notesText.setText(dataCursor.getString(2));
+                        return rootView;
+                    case 5:
+                        rootView = inflater.inflate(R.layout.fragment_past5, container, false);
+                        repsText = (TextView) rootView.findViewById(R.id.repsDisplay);
+                        repsText.setText(Integer.toString(dataCursor.getInt(0)));
+                        weightText = (TextView) rootView.findViewById(R.id.weightDisplay);
+                        weightText.setText(Integer.toString(dataCursor.getInt(1)));
+
+                        return rootView;
+                    case 6:
+                        rootView = inflater.inflate(R.layout.fragment_past6, container, false);
+                        repsText = (TextView) rootView.findViewById(R.id.repsDisplay);
+                        repsText.setText(Integer.toString(dataCursor.getInt(0)));
+                        weightText = (TextView) rootView.findViewById(R.id.weightDisplay);
+                        weightText.setText(Integer.toString(dataCursor.getInt(1)));
+                        notesText = (TextView) rootView.findViewById(R.id.notesDisplay);
+                        notesText.setText(dataCursor.getString(2));
+                        return rootView;
+                }
             }
 
-           ArrayAdapter<String> repsAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
-                    android.R.layout.simple_spinner_item, repsList);
-           ArrayAdapter<String> weightAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(),
-                    android.R.layout.simple_spinner_item, weightList);
-            repsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            weightAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            dataCursor.close();
+            db.close();
 
-
-
-
-
-            switch(typeOfView){
-                case 0:
-                    rootView = inflater.inflate(R.layout.fragment_vp, container, false);
-                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
-                    repsSpinner.setAdapter(repsAdapter);
-                    initializeSpinnerListener(repsSpinner, "reps");
-                    return rootView;
-                case 1:
-                    rootView = inflater.inflate(R.layout.fragment_vp1, container, false);
-                    return rootView;
-                case 2:
-                    rootView = inflater.inflate(R.layout.fragment_vp2, container, false);
-                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
-                    weightSpinner.setAdapter(weightAdapter);
-                    initializeSpinnerListener(weightSpinner, "weight");
-                    return rootView;
-                case 3:
-                    rootView = inflater.inflate(R.layout.fragment_vp3, container, false);
-                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
-                    repsSpinner.setAdapter(repsAdapter);
-                    initializeSpinnerListener(repsSpinner, "reps");
-                    return rootView;
-                case 4:
-                    rootView = inflater.inflate(R.layout.fragment_vp4, container, false);
-                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
-                    weightSpinner.setAdapter(weightAdapter);
-                    initializeSpinnerListener(weightSpinner, "weight");
-                    return rootView;
-                case 5:
-                    rootView = inflater.inflate(R.layout.fragment_vp5, container, false);
-                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
-                    repsSpinner.setAdapter(repsAdapter);
-                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
-                    weightSpinner.setAdapter(weightAdapter);
-                    initializeSpinnerListener(repsSpinner, "reps");
-                    initializeSpinnerListener(weightSpinner, "weight");
-                    return rootView;
-                case 6:
-                    rootView = inflater.inflate(R.layout.fragment_vp6, container, false);
-                    repsSpinner = (Spinner) rootView.findViewById(R.id.repsSpinner);
-                    repsSpinner.setAdapter(repsAdapter);
-                    weightSpinner = (Spinner) rootView.findViewById(R.id.weightSpinner);
-                    weightSpinner.setAdapter(weightAdapter);
-                    initializeSpinnerListener(repsSpinner, "reps");
-                    initializeSpinnerListener(weightSpinner, "weight");
-                    return rootView;
-            }
 
 
             return rootView;
@@ -464,11 +536,13 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         dataCursor.moveToFirst();
                         int tab = currentTab();
 
-                        String update = "UPDATE data SET "+repsorweight+"" + tab + " = " + itemInt + " WHERE eid = " + ExercisePager.EID + " AND date = " + dateInt;
+                        String update = "UPDATE data SET "+repsorweight+"" + sectionArgument + " = " + itemInt + " WHERE eid = " + ExercisePager.EID + " AND date = " + dateInt;
                         db.getWritableDatabase().execSQL(update);
                         Log.d("SPINNAH", update);
                         Toast.makeText(getActivity(), item, Toast.LENGTH_SHORT).show();
                         updateDate(dateInt);
+                        dataCursor.close();
+                        db.close();
 
 
                     }
