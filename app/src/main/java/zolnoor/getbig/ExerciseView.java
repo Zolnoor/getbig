@@ -19,13 +19,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
+
 import android.widget.ListView;
 import android.widget.NumberPicker;
 import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
+
 
 /**
             REMINDER!!! I need to go through and make sure cursors and dbs get closed after all my querying.
@@ -85,7 +87,6 @@ public class ExerciseView extends ListActivity {
         else{
             int lastEidAdded=-1;
             String eidsQueried="";
-            Log.d("EIDS", "Is ti doing this");
 
             ActionBar ab = getActionBar();
             String title = getTitle(PID);
@@ -97,10 +98,6 @@ public class ExerciseView extends ListActivity {
                 ab.setTitle(Html.fromHtml("<font color='#FFFFFF'><b>" + title + " (" + MainActivity.currentViewingDate+")</b></font>"));
             }
 
-
-
-
-
             db = new DatabaseHelper(this);
             cerser = db
                     .getReadableDatabase()
@@ -108,7 +105,7 @@ public class ExerciseView extends ListActivity {
                                     "FROM data WHERE date = "+MainActivity.currentViewingDateInt,
                             null
                     );
-            Log.d("EIDS","The current viewing date is "+MainActivity.currentViewingDateInt);
+
             if(cerser.moveToFirst()){
                 cerser.moveToFirst();
                 eidsQueried=""+cerser.getInt(1);
@@ -119,10 +116,7 @@ public class ExerciseView extends ListActivity {
                     }
                     else{
                         lastEidAdded=cerser.getInt(1);
-                        Log.d("EIDSQUERY", "this one equals "+lastEidAdded);
-
-                            eidsQueried=eidsQueried+" OR _ID = "+lastEidAdded;
-                            Log.d("EIDSQUERY", "the string after the else is "+eidsQueried);
+                        eidsQueried=eidsQueried+" OR _ID = "+lastEidAdded;
                         }
                 }
             }
@@ -143,12 +137,15 @@ public class ExerciseView extends ListActivity {
 
             setListAdapter(adapter);
             registerForContextMenu(getListView());
-
+            exerciseCursor.close();
+            cerser.close();
+            db.close();
 
         }
 
     }
 
+    //Calls the appropriate refresh method
     @Override
     public void onResume() {
         super.onResume();
@@ -234,6 +231,8 @@ public class ExerciseView extends ListActivity {
 
     //Creates the parameter view, then inflates a dialog box with it
     //Made for deciding how the exercise fragment will appear
+    //----In the future, I will get rid of 'sets' and make that mandatory
+    //----Also, might just make it look fancier in general (09/29/14)
     public void fragParams(final int igd){
         REPS = 0;
         SETS = 0;
@@ -243,8 +242,6 @@ public class ExerciseView extends ListActivity {
         View checkBoxView = View.inflate(this, R.layout.paramaters, null);
 
         try {
-
-
             isSets = (CheckBox) checkBoxView.findViewById(R.id.isSets);
             isSets.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -304,7 +301,6 @@ public class ExerciseView extends ListActivity {
                     .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            Log.d("VALUEOFSETS", "SETS is equal to "+SETS);
                             if (SETS == 1) {
                                 DialogExtension(igd, REPS, NOTES, WEIGHT);
                             } else if (SETS==0){
@@ -321,14 +317,12 @@ public class ExerciseView extends ListActivity {
                                 ContentValues click = new ContentValues();
                                 click.put("CLICKED", 1);
                                 db.getWritableDatabase().update("exercises", click, "_id="+igd, null);
-                                Log.d("FIRSTDIALOG", "The ID was "+igd);
                                 refresh();
 
                                     Intent intent = new Intent(getBaseContext(), ExercisePager.class);
                                     intent.putExtra("EID", igd);
                                     intent.putExtra("WID", PID);
                                     startActivity(intent);
-                                // Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                             }
                         }
                     })
@@ -342,11 +336,12 @@ public class ExerciseView extends ListActivity {
                     .show();
 
         }catch (Exception e){
-            Log.d("FUCK", "The exception was "+e);
+            Log.d("fragParams", "The exception was "+e);
         }
     }
 
     //Extends the first parameter dialog if the number of sets must be specified
+    //----In the future, will make this mandatory (09/29/14)
     public void DialogExtension(final int P, final int Re, final int N, final int W){
 
         View numberPickerView = View.inflate(this, R.layout.number_of_sets, null);
@@ -383,14 +378,12 @@ public class ExerciseView extends ListActivity {
                         ContentValues click = new ContentValues(1);
                         click.put(DatabaseHelper.CLICKED, 1);
                         db.getWritableDatabase().update("exercises", click, "_id="+P, null);
-                        Log.d("SECONDDIALOG", "the ID was "+P);
                         refresh();
 
                         Intent intent = new Intent(getBaseContext(), ExercisePager.class);
                         intent.putExtra("EID", P);
                         intent.putExtra("WID", PID);
                         startActivity(intent);
-                        //Toast.makeText(getBaseContext(), "Just testing " + SETS, Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel",
@@ -405,10 +398,14 @@ public class ExerciseView extends ListActivity {
 
 
 
-    //Opens a dialog button with an edittext, positive and negative button. if ok is selected
+    //Opens a dialog button with an AutoCompleteTextView, positive and negative button. if ok is selected
     //then processAdd() is called
     public void add() {
-        final EditText input = new EditText(this);
+        final AutoCompleteTextView input = new AutoCompleteTextView(this);
+        String[] exercises = getResources().getStringArray(R.array.exercises_array);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, exercises);
+        input.setAdapter(adapter);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
          builder.setTitle("Create new exercise")
                 .setMessage("Please name your exercise!")
@@ -441,7 +438,7 @@ public class ExerciseView extends ListActivity {
     public void delete(final long rowId) {
         if (rowId > 0) {
             new AlertDialog.Builder(this)
-                    .setTitle("You sure you want to delete this Workout?")
+                    .setTitle("You sure you want to delete this Exercise?")
                     .setPositiveButton("Ok",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog,
@@ -508,12 +505,11 @@ public class ExerciseView extends ListActivity {
         registerForContextMenu(getListView());
     }
 
+    //This refresh method is used if MainActivity.isViewingPast == true
     public void refresh(int dateInt){
 
         int lastEidAdded=-1;
         String eidsQueried="";
-        Log.d("EIDS", "Is ti doing this");
-
 
         db = new DatabaseHelper(this);
         cerser = db
@@ -522,7 +518,7 @@ public class ExerciseView extends ListActivity {
                                 "FROM data WHERE date = "+dateInt,
                         null
                 );
-        Log.d("EIDS","The current viewing date is "+dateInt);
+
         if(cerser.moveToFirst()){
             cerser.moveToFirst();
             eidsQueried=""+cerser.getInt(1);
@@ -533,15 +529,11 @@ public class ExerciseView extends ListActivity {
                 }
                 else{
                     lastEidAdded=cerser.getInt(1);
-                    Log.d("EIDSQUERY", "this one equals "+lastEidAdded);
-
                     eidsQueried=eidsQueried+" OR _ID = "+lastEidAdded;
-                    Log.d("EIDSQUERY", "the string after the else is "+eidsQueried);
+
                 }
             }
         }
-
-
 
         exerciseCursor = db
                 .getReadableDatabase()
@@ -552,8 +544,8 @@ public class ExerciseView extends ListActivity {
 
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, exerciseCursor,
-                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
-                new int[]{R.id.textViewItem, R.id.textViewDate}, 0);
+                new String[]{DatabaseHelper.TITLE},
+                new int[]{R.id.textViewItem}, 0);
 
         setListAdapter(adapter);
         registerForContextMenu(getListView());
@@ -562,25 +554,21 @@ public class ExerciseView extends ListActivity {
     //Gets the ID of the item. Checks to see if it has ever been clicked before
     //If it has been clicked, it opens the respective fragment
     //If not, it opens the dialog to change the fragment parameters
+    //---I dont feel like fixing magic number right now. Also, I should have them set paramaters right after they make it,
+    //---checking for whether or not the item had been clicked was a huge, unnecessary hassle now that I'm looking back it it
+    //---o well lol (09/29/14)
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
-
-
         int bigID=-14;
         exerciseCursor.moveToFirst();
-        Log.d("CLICKING", "ID is "+exerciseCursor.getInt(0)+"versus position id which is "+id);
+
         while(bigID==-14){
             if(exerciseCursor.getInt(0)==id){
                 bigID=(int)id;
-                Log.d("ONLISTCLICK", "The ID being passed everywhere is "+bigID);
-
                 if(exerciseCursor.getInt(2)!=1){
-                    Log.d("HASITBEENCLICKED", "The clicked value is "+exerciseCursor.getInt(1));
                     fragParams(bigID);
-
-
                 }
                 else{
                     //this is where I will open the fragment
@@ -595,7 +583,7 @@ public class ExerciseView extends ListActivity {
                 exerciseCursor.moveToNext();
             }
             if(exerciseCursor.getInt(0)!=id){
-                Log.d("CLICKING", "SHIT THEY WERENT THE SAME");
+                Log.d("CLICKING", "Error that should never happen");
             }
         }
     }

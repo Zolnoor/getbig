@@ -32,7 +32,7 @@ import android.widget.Toast;
 
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
+
 
 /*
          REMINDER!!! I need to go through and make sure cursors and dbs get closed after all my querying.
@@ -51,7 +51,8 @@ public class MainActivity extends ListActivity {
     public static String currentViewingDate;
     public static int currentViewingDateInt;
 
-
+    //Called at the start of the activity;
+    //calls the appropriate DB and populates an adapter so that we may have a list
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,8 +65,6 @@ public class MainActivity extends ListActivity {
                                 "FROM workouts ORDER BY _ID",
                         null
                 );
-       // workoutsCursor.moveToFirst();
-        //Log.d("SHITFUCK", ""+workoutsCursor.getString(2));
 
         adapter = new SimpleCursorAdapter(this,
                 R.layout.list_view_item, workoutsCursor,
@@ -77,6 +76,7 @@ public class MainActivity extends ListActivity {
 
     }
 
+    //Closes cursor/db
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -85,6 +85,7 @@ public class MainActivity extends ListActivity {
         db.close();
     }
 
+    //Calls the appropriate refresh method
     @Override
     public void onResume() {
         super.onResume();
@@ -96,6 +97,7 @@ public class MainActivity extends ListActivity {
         }
     }
 
+    //If we are in VIEW PAST mode then the back key simply reverts that
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event){
         if(keyCode == KeyEvent.KEYCODE_BACK){
@@ -108,7 +110,7 @@ public class MainActivity extends ListActivity {
         return false;
     }
 
-    //populates the actionbar with that one item
+    //populates the actionbar depending on what mode we are in
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -173,8 +175,8 @@ public class MainActivity extends ListActivity {
 
 
 
-    //Opens a dialog button with an edittext, positive and negative button. if ok is selected, showThatShit()
-    //is called and the edittext field value is saved to a string
+    //Opens a dialog button with an edittext, positive and negative button. if ok is selected, processAdd()
+    //is called and the AutoComplete field value is saved to a string
     public void add() {
         final EditText input = new EditText(this);
         input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -215,6 +217,7 @@ public class MainActivity extends ListActivity {
                 dialog.show();
     }
 
+    //Self explanatory
     public void delete(final long rowId) {
         if (rowId > 0) {
             new AlertDialog.Builder(this)
@@ -240,9 +243,9 @@ public class MainActivity extends ListActivity {
         }
     }
 
+    //Opens a dialog showing a calendar view, allowing the user to select what date they would like to view
+    //past workouts. Also changes isViewingPast to true and changes everything else as well
     public void calendarDialog(){
-
-
         View calendarDialog = View.inflate(this, R.layout.calendar, null);
 
         final DatePicker datePicker = (DatePicker) calendarDialog.findViewById(R.id.datePicker);
@@ -267,7 +270,6 @@ public class MainActivity extends ListActivity {
                         String DATE = ""+datePicker.getYear()+month+day;
                         int dateInt = Integer.parseInt(DATE);
                         refresh(dateInt);
-                        Toast.makeText(getBaseContext(), ""+dateInt, Toast.LENGTH_SHORT).show();
 
                     }
                 })
@@ -278,10 +280,9 @@ public class MainActivity extends ListActivity {
                     }
                 })
                 .show();
-
-
     }
 
+    //Inserts into the workouts DB
     public void processAdd(String name){
         ContentValues values=new ContentValues(1);
 
@@ -292,6 +293,7 @@ public class MainActivity extends ListActivity {
         refresh();
     }
 
+    //Self Explanatory
     public void processDelete(long rowId){
         String[] args={String.valueOf(rowId)};
 
@@ -320,11 +322,10 @@ public class MainActivity extends ListActivity {
         isViewingPast=false;
         invalidateOptionsMenu();
 
-        //workoutsCursor.close();
-        //db.close();
-
     }
 
+    //This refresh(int) is called if we are viewing the past. Only populates our listview
+    //with workouts that have data from the selected date
     public void refresh(int dateInt){
         int lastWidAdded=-1;
         String widsQueried="";
@@ -343,63 +344,57 @@ public class MainActivity extends ListActivity {
             lastWidAdded=cerser.getInt(1);
             while(cerser.moveToNext()){
                 if(lastWidAdded == cerser.getInt(1)){
-
+                //do nothing
                 }
                 else{
                     lastWidAdded=cerser.getInt(1);
-                    Log.d("WIDSQUERY", "this one equals "+lastWidAdded);
-
-                        widsQueried=widsQueried+" OR _ID = "+lastWidAdded;
-                        Log.d("WIDSQUERY", "the string after the else is "+widsQueried);
-
-
+                    widsQueried=widsQueried+" OR _ID = "+lastWidAdded;
                 }
-
-
             }
         }
-        //widsQueried=widsQueried+lastWidAdded;
-
-
-        workoutsCursor = db
-                .getReadableDatabase()
-                .rawQuery("SELECT _ID, title, fulldate " +
-                                "FROM workouts WHERE _ID = "+widsQueried,
-                        null
-                );
-        adapter = new SimpleCursorAdapter(this,
-                R.layout.list_view_item, workoutsCursor,
-                new String[]{DatabaseHelper.TITLE, DatabaseHelper.FULLDATE},
-                new int[]{R.id.textViewItem}, 0);
-
-        setListAdapter(adapter);
-        registerForContextMenu(getListView());
-        isViewingPast=true;
-
-        String fullDate="";
-        String dayte = Integer.toString(dateInt);
-
-        SimpleDateFormat smf = new SimpleDateFormat("yyyyMMdd");
-        SimpleDateFormat two = new SimpleDateFormat("MM/dd/yyyy");
-        //SimpleDateFormat two = new SimpleDateFormat("EEE MMM dd, yyyy");
-        try {
-            currentViewingDate = two.format(smf.parse(dayte));
-        }catch (Exception e){
-            Log.d("Date", "exception was "+e);
-            currentViewingDate="wow the date shit didnt work";
+        if(widsQueried.equals("")){
+            refresh();
+            Toast.makeText(getBaseContext(), "No workouts selected.", Toast.LENGTH_LONG).show();
         }
+        else {
+            workoutsCursor = db
+                    .getReadableDatabase()
+                    .rawQuery("SELECT _ID, title " +
+                                    "FROM workouts WHERE _ID = " + widsQueried,
+                            null
+                    );
+            adapter = new SimpleCursorAdapter(this,
+                    R.layout.list_view_item, workoutsCursor,
+                    new String[]{DatabaseHelper.TITLE},
+                    new int[]{R.id.textViewItem}, 0);
+
+            setListAdapter(adapter);
+            registerForContextMenu(getListView());
+            isViewingPast = true;
+
+            String fullDate = "";
+            String dayte = Integer.toString(dateInt);
+
+            SimpleDateFormat smf = new SimpleDateFormat("yyyyMMdd");
+            SimpleDateFormat two = new SimpleDateFormat("MM/dd/yyyy");
+
+            try {
+                currentViewingDate = two.format(smf.parse(dayte));
+            } catch (Exception e) {
+                Log.d("Date", "exception was " + e);
+                currentViewingDate = "Null Date";
+            }
 
 
-        invalidateOptionsMenu();
-
-        //workoutsCursor.close();
-        //db.close();
+            invalidateOptionsMenu();
 
 
+        }
     }
 
     //Finds the _ID of the workout clicked, puts it in an intent and sends it to
     //ExerciseView.java in order to make correct PID and get right title
+    //Uses a magic number. I know. I'll fix that in the future (09/29/14)
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);

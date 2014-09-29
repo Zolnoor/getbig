@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="exercises_array">
+        <item>Ab Crunch</item>
+        <item>Ab Roller</item>
+        <item>Air Bike</item>
+        <item>Ankle Circles</item>
+        <item>Anti-Gravity Press</item>
+        <item>Arm Circles</item>
+        <item>Arnold Dumbbell Press</item>
+        <item>Axle Deadlift</item>
+        <item>Back Flyes</item>
+        <item>Barbell Curl</item>
+        <item>Barbell Deadliftt</item>
+        <item>Barbell Squat</item>
+        <item>Barbell Lunge</item>
+        <item>Box Squat</item>
+        <item>Bench Press</item>
+        <item>Curls</item>
+        <item>Lawnmowers</item>
+        <item>Bent-Over Rows</item>
+        <item>Cable Crossover</item>
+        <item>Cable One Arm Tricep Extension</item>
+        <item>Calf Raises</item>
+        <item>Chin-Up</item>
+        <item>Clean and Jerk</item>
+        <item>Crunches</item>
+        <item>Decline Bench Press</item>
+        <item>Decline Dumbbell Bench Press</item>
+        <item>Dips</item>
+        <item>Dumbbell Bicep Curl</item>
+        <item>Dumbbell Flyes</item>
+        <item>Front Plate Raise</item>
+        <item>Front Squats</item>
+        <item>Good Morning</item>
+        <item>Hammer Curls</item>
+        <item>Hang Clean</item>
+        <item>Incline Dumbbell Press</item>
+        <item>Incline Bench Press</item>
+        <item>Leg Press</item>
+        <item>Muscle Up</item>
+        <item>Neck Press</item>
+        <item>Lat Pulldown</item>
+        <item>Preacher Curls</item>
+        <item>Pushups</item>
+        <item>Squats</item>
+        <item>Situps</item>
+        <item>Tire Flip</item>
+        <item>Tricep Pushdown</item>
+        <item>Zottman Curl</item>
+    </string-array>
+</resources>

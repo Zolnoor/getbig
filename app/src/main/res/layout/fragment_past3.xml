@@ -10,22 +10,44 @@
 
     <TextView
         android:id="@+id/reps"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
         android:text="@string/repsfrag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:textSize="20sp"
+        android:paddingTop="8dp"
+        android:layout_alignBottom="@+id/repsDisplay"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
     <TextView
         android:id="@+id/repsDisplay"
         android:layout_width="60dp"
         android:layout_height="40dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
-
+        android:layout_alignParentEnd="true"
+        android:paddingTop="8dp"
+        android:paddingBottom="10dp"
+        android:textSize="20sp"/>
+    <View
+        android:layout_width="fill_parent"
+        android:paddingTop="100dp"
+        android:layout_height="1dp"
+        android:background="@android:color/holo_red_light"
+        android:id="@+id/view"
+        android:layout_marginTop="38dp"
+        android:layout_below="@+id/repsDisplay"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:id="@+id/notesDisplay"
         android:layout_width="fill_parent"
         android:layout_height="100dp"
-        android:layout_below="@id/reps" />
+        android:layout_below="@id/view"
+        android:paddingTop="10dp"
+        android:layout_alignRight="@+id/repsDisplay"
+        android:layout_alignEnd="@+id/repsDisplay"
+        android:layout_marginTop="21dp"
+        android:textSize="20sp"/>
 
 </RelativeLayout>
