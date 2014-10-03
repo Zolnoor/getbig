@@ -27,6 +27,7 @@ import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.NumberPicker;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 
 /**
@@ -157,10 +158,13 @@ public class ExerciseView extends ListActivity {
         }
     }
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        if(MainActivity.isViewingPast) {
+            cerser.close();
+        }
         exerciseCursor.close();
         db.close();
     }
@@ -235,24 +239,12 @@ public class ExerciseView extends ListActivity {
     //----Also, might just make it look fancier in general (09/29/14)
     public void fragParams(final int igd){
         REPS = 0;
-        SETS = 0;
         NOTES = 0;
         WEIGHT = 0;
 
         View checkBoxView = View.inflate(this, R.layout.paramaters, null);
 
         try {
-            isSets = (CheckBox) checkBoxView.findViewById(R.id.isSets);
-            isSets.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    if (b == true) {
-                        SETS = 1;
-                    }  if (b == false) {
-                        SETS = 0;
-                    }
-                }
-            });
 
             reps = (CheckBox) checkBoxView.findViewById(R.id.reps);
             reps.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -301,10 +293,17 @@ public class ExerciseView extends ListActivity {
                     .setPositiveButton("Save", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            if (SETS == 1) {
-                                DialogExtension(igd, REPS, NOTES, WEIGHT);
-                            } else if (SETS==0){
-                                ContentValues values = new ContentValues(6);
+                            if (REPS == 0 && NOTES == 0 && WEIGHT == 0) {
+                                Toast.makeText(getBaseContext(), "You must choose parameters", Toast.LENGTH_SHORT).show();
+                            }
+                            else{
+                            DialogExtension(igd, REPS, NOTES, WEIGHT);
+                        }
+
+                       // if(SETS==0)
+
+                        //{
+                             /*   ContentValues values = new ContentValues(6);
                                 int one=1;
                                 values.put(DatabaseHelper.PID, igd);
                                 values.put(DatabaseHelper.SETS, 1);
@@ -322,8 +321,12 @@ public class ExerciseView extends ListActivity {
                                     Intent intent = new Intent(getBaseContext(), ExercisePager.class);
                                     intent.putExtra("EID", igd);
                                     intent.putExtra("WID", PID);
-                                    startActivity(intent);
-                            }
+                                    startActivity(intent); */
+                     //   }
+
+                     //   else
+
+                       // {
                         }
                     })
                     .setNegativeButton("Cancel",
@@ -343,6 +346,7 @@ public class ExerciseView extends ListActivity {
     //Extends the first parameter dialog if the number of sets must be specified
     //----In the future, will make this mandatory (09/29/14)
     public void DialogExtension(final int P, final int Re, final int N, final int W){
+        setss=0;
 
         View numberPickerView = View.inflate(this, R.layout.number_of_sets, null);
 
@@ -352,9 +356,12 @@ public class ExerciseView extends ListActivity {
         np.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
             @Override
             public void onValueChange(NumberPicker numberPicker, int i, int i2) {
-               setss = i2;
+                setss = i2;
             }
         });
+        if (setss==0){
+            setss=1;
+        }
 
 
         new AlertDialog.Builder(this)
@@ -583,7 +590,7 @@ public class ExerciseView extends ListActivity {
                 exerciseCursor.moveToNext();
             }
             if(exerciseCursor.getInt(0)!=id){
-                Log.d("CLICKING", "Error that should never happen");
+                Log.d("CLICKING", "Just doing my weird ID algorithm");
             }
         }
     }

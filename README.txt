@@ -17,3 +17,11 @@
             If you have any questions or concerns please contact me at
         nickzolnoor@gmail.com or https://www.linkedin.com/in/nzolnoor
 
+
+1.1 Changelog
+-------------
+Fixed:
+Apostrophes in notes caused a crash
+0's now disappear when going to edit reps or weight
+Fixed some layouts
+Fixed Exercise creation process

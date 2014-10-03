@@ -80,7 +80,9 @@ public class MainActivity extends ListActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        if(isViewingPast){
+            cerser.close();
+        }
         workoutsCursor.close();
         db.close();
     }

@@ -93,7 +93,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
             }
             }
 
-        actionBar.setBackgroundDrawable(new ColorDrawable(0xffCE0F0F));
+        actionBar.setBackgroundDrawable(new ColorDrawable(0xffFF2400));
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -152,17 +152,28 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
         paramCursor.close();
         pdb.close();
 
-
-        // For each of the sections in the app, add a tab to the action bar.
-        for (int i = 0; i < numberOfSets; i++) {
-            // Create a tab with text corresponding to the page title defined by
-            // the adapter. Also specify this Activity object, which implements
-            // the TabListener interface, as the callback (listener) for when
-            // this tab is selected.
+        Log.d("PagerOnCreate", "number of sets is "+numberOfSets);
+        if(numberOfSets == 1){
             actionBar.addTab(
                     actionBar.newTab()
-                            .setText("Set "+(i+1))
+                            .setText("Data")
                             .setTabListener(this));
+            Log.d("TAB", "made the one tab");
+
+        }
+        else if (numberOfSets > 1){
+            // For each of the sections in the app, add a tab to the action bar.
+            for (int i = 0; i < numberOfSets; i++) {
+                // Create a tab with text corresponding to the page title defined by
+                // the adapter. Also specify this Activity object, which implements
+                // the TabListener interface, as the callback (listener) for when
+                // this tab is selected.
+                actionBar.addTab(
+                        actionBar.newTab()
+                                .setText("Set " + (i + 1))
+                                .setTabListener(this)
+                );
+            }
         }
 
 
@@ -380,7 +391,13 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         rootView = inflater.inflate(R.layout.fragment_vp, container, false);
                         repsEdit = (EditText) rootView.findViewById(R.id.repsEdit);
                         initializeEditListener(repsEdit, "reps");
-                        repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        if(dataCursor.getInt(0)==0){
+                            repsEdit.setText("");
+                            repsEdit.setHint("0");
+                        }
+                        else {
+                            repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        }
                         return rootView;
                     case 1:
                         rootView = inflater.inflate(R.layout.fragment_vp1, container, false);
@@ -392,13 +409,25 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         rootView = inflater.inflate(R.layout.fragment_vp2, container, false);
                         weightEdit = (EditText) rootView.findViewById(R.id.weightEdit);
                         initializeEditListener(weightEdit, "weight");
-                        weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        if(dataCursor.getInt(1)==0){
+                            weightEdit.setText("");
+                            weightEdit.setHint("0");
+                        }
+                        else {
+                            weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        }
                         return rootView;
                     case 3:
                         rootView = inflater.inflate(R.layout.fragment_vp3, container, false);
                         repsEdit = (EditText) rootView.findViewById(R.id.repsEdit);
                         initializeEditListener(repsEdit, "reps");
-                        repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        if(dataCursor.getInt(0)==0){
+                            repsEdit.setText("");
+                            repsEdit.setHint("0");
+                        }
+                        else {
+                            repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        }
                         notesEdit = (EditText) rootView.findViewById(R.id.notes);
                         initializeNoteListener(notesEdit);
                         notesEdit.setText(dataCursor.getString(2));
@@ -407,7 +436,13 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         rootView = inflater.inflate(R.layout.fragment_vp4, container, false);
                         weightEdit = (EditText) rootView.findViewById(R.id.weightEdit);
                         initializeEditListener(weightEdit, "weight");
-                        weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        if(dataCursor.getInt(1)==0){
+                            weightEdit.setText("");
+                            weightEdit.setHint("0");
+                        }
+                        else {
+                            weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        }
                         notesEdit = (EditText) rootView.findViewById(R.id.notes);
                         initializeNoteListener(notesEdit);
                         notesEdit.setText(dataCursor.getString(2));
@@ -416,19 +451,44 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         rootView = inflater.inflate(R.layout.fragment_vp5, container, false);
                         repsEdit = (EditText) rootView.findViewById(R.id.repsEdit);
                         initializeEditListener(repsEdit, "reps");
-                        repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        if(dataCursor.getInt(0)==0){
+                            repsEdit.setText("");
+                            repsEdit.setHint("0");
+                        }
+                        else {
+                            repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        }
                         weightEdit = (EditText) rootView.findViewById(R.id.weightEdit);
                         initializeEditListener(weightEdit, "weight");
-                        weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        if(dataCursor.getInt(1)==0){
+                            weightEdit.setText("");
+                            weightEdit.setHint("0");
+                        }
+                        else {
+                            weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        }
+                        initializeEditListener(weightEdit, "weight");
                         return rootView;
                     case 6:
                         rootView = inflater.inflate(R.layout.fragment_vp6, container, false);
                         repsEdit = (EditText) rootView.findViewById(R.id.repsEdit);
                         initializeEditListener(repsEdit, "reps");
-                        repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        if(dataCursor.getInt(0)==0){
+                            repsEdit.setText("");
+                            repsEdit.setHint("0");
+                        }
+                        else {
+                            repsEdit.setText(Integer.toString(dataCursor.getInt(0)));
+                        }
                         weightEdit = (EditText) rootView.findViewById(R.id.weightEdit);
                         initializeEditListener(weightEdit, "weight");
-                        weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        if(dataCursor.getInt(1)==0){
+                            weightEdit.setText("");
+                            weightEdit.setHint("0");
+                        }
+                        else {
+                            weightEdit.setText(Integer.toString(dataCursor.getInt(1)));
+                        }
                         notesEdit = (EditText) rootView.findViewById(R.id.notes);
                         initializeNoteListener(notesEdit);
                         notesEdit.setText(dataCursor.getString(2));
@@ -514,10 +574,11 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                     public void onFocusChange(View view, boolean b) {
                         String DATE, month, day;
                         String item = edit.getText().toString();
+                        item = item.replace("'", "''");
 
                         Calendar c1 = Calendar.getInstance();
 
-                        month = ""+c1.get(Calendar.MONTH);
+                        month = ""+(c1.get(Calendar.MONTH)+1);
                         day = ""+c1.get(Calendar.DAY_OF_MONTH);
 
                         if(c1.get(Calendar.DAY_OF_MONTH)<10){
@@ -527,7 +588,9 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                             month="0"+(c1.get(Calendar.MONTH)+1);
                         }
                         DATE = ""+c1.get(Calendar.YEAR)+month+day;
+
                         int dateInt = Integer.parseInt(DATE);
+
                         db = new DatabaseHelper(getActivity());
                         dataCursor = db
                                 .getReadableDatabase()
@@ -570,7 +633,7 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
 
                         Calendar c1 = Calendar.getInstance();
 
-                        month = ""+c1.get(Calendar.MONTH);
+                        month = ""+(c1.get(Calendar.MONTH)+1);
                         day = ""+c1.get(Calendar.DAY_OF_MONTH);
 
                         if(c1.get(Calendar.DAY_OF_MONTH)<10){
@@ -579,8 +642,11 @@ public class ExercisePager extends FragmentActivity implements ActionBar.TabList
                         if((c1.get(Calendar.MONTH)+1)<10){
                             month="0"+(c1.get(Calendar.MONTH)+1);
                         }
+                        Log.d("REPSLISTENER", "The month is "+month+" and the day is "+day);
                         DATE = ""+c1.get(Calendar.YEAR)+month+day;
+                        Log.d("REPSLISTENER", "DATE is "+DATE);
                         int dateInt = Integer.parseInt(DATE);
+                        Log.d("REPSLISTENER", "dateInt is "+dateInt);
                         db = new DatabaseHelper(getActivity());
                         dataCursor = db
                                 .getReadableDatabase()
